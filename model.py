@@ -84,7 +84,7 @@ class Model(object):
             self.cursor.execute('CREATE TABLE %s (%s);' % (key, fields_string))
             
         #Заполняем таблицы видов зависимости
-        addictions = [u'алкоголь', u'наркотики', u'дизоморфин', u'прочее']
+        addictions = [u'Алкоголь', u'Наркотики', u'Дезоморфин', u'Прочее']
         
         for addiction in addictions:
             self.cursor.execute('insert into addiction (name) values ("%s")' % addiction)
