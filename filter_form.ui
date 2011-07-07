@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>464</width>
-    <height>478</height>
+    <height>418</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string/>
   </property>
-  <widget class="QDateEdit" name="born_date">
+  <widget class="QDateEdit" name="born_date_from">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -78,7 +78,7 @@
     <string>Дата рождения</string>
    </property>
   </widget>
-  <widget class="QGroupBox" name="gender_group">
+  <widget class="QGroupBox" name="gender">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -96,7 +96,7 @@
    <property name="checkable">
     <bool>false</bool>
    </property>
-   <widget class="QCheckBox" name="maleChoise">
+   <widget class="QCheckBox" name="male">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -109,7 +109,7 @@
      <string>Муж.</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="femaleChoise">
+   <widget class="QCheckBox" name="female">
     <property name="geometry">
      <rect>
       <x>59</x>
@@ -123,17 +123,17 @@
     </property>
    </widget>
   </widget>
-  <widget class="QLabel" name="label_5">
+  <widget class="QLabel" name="address_2">
    <property name="geometry">
     <rect>
      <x>170</x>
      <y>220</y>
-     <width>46</width>
+     <width>86</width>
      <height>13</height>
     </rect>
    </property>
    <property name="text">
-    <string>Адрес</string>
+    <string>Адрес прописки</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_7">
@@ -203,7 +203,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>440</y>
+     <y>380</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -216,7 +216,7 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>440</y>
+     <y>380</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -229,7 +229,7 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>440</y>
+     <y>380</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -237,36 +237,6 @@
    <property name="text">
     <string>Закрыть</string>
    </property>
-  </widget>
-  <widget class="QListWidget" name="addictionList">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>320</y>
-     <width>171</width>
-     <height>81</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>Алкоголь</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Наркотики</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Дизоморфин</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Прочее</string>
-    </property>
-   </item>
   </widget>
   <widget class="QLabel" name="label_10">
    <property name="geometry">
@@ -307,7 +277,7 @@
     <string>До</string>
    </property>
   </widget>
-  <widget class="QDateEdit" name="born_date_2">
+  <widget class="QDateEdit" name="born_date_to">
    <property name="geometry">
     <rect>
      <x>320</x>
@@ -325,25 +295,25 @@
     <rect>
      <x>10</x>
      <y>220</y>
-     <width>30</width>
-     <height>13</height>
+     <width>88</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Город</string>
+    <string>Город прописки</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="address_2">
+  <widget class="QLineEdit" name="address_city">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>240</y>
-     <width>130</width>
+     <width>140</width>
      <height>20</height>
     </rect>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkBox">
+  <widget class="QCheckBox" name="born_place_type">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -356,7 +326,7 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkBox_2">
+  <widget class="QCheckBox" name="last_name_type">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -369,7 +339,7 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkBox_3">
+  <widget class="QCheckBox" name="first_name_type">
    <property name="geometry">
     <rect>
      <x>160</x>
@@ -382,7 +352,7 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkBox_4">
+  <widget class="QCheckBox" name="middle_name_type">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -395,7 +365,7 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkBox_5">
+  <widget class="QCheckBox" name="address_sity_type">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -408,7 +378,7 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="checkBox_6">
+  <widget class="QCheckBox" name="address_type">
    <property name="geometry">
     <rect>
      <x>170</x>
@@ -424,22 +394,32 @@
   <widget class="QLabel" name="label_11">
    <property name="geometry">
     <rect>
-     <x>210</x>
+     <x>170</x>
      <y>300</y>
      <width>136</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Длительность (в месяцах)</string>
+    <string>Длительность (в годах)</string>
    </property>
   </widget>
-  <widget class="QSpinBox" name="spinBox">
+  <widget class="QSpinBox" name="addiction_strat_date">
    <property name="geometry">
     <rect>
-     <x>210</x>
+     <x>170</x>
      <y>320</y>
-     <width>131</width>
+     <width>61</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="addiction_type_id">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>320</y>
+     <width>141</width>
      <height>22</height>
     </rect>
    </property>
@@ -447,23 +427,22 @@
  </widget>
  <tabstops>
   <tabstop>last_name</tabstop>
-  <tabstop>checkBox_2</tabstop>
+  <tabstop>last_name_type</tabstop>
   <tabstop>first_name</tabstop>
-  <tabstop>checkBox_3</tabstop>
+  <tabstop>first_name_type</tabstop>
   <tabstop>middle_name</tabstop>
-  <tabstop>checkBox_4</tabstop>
-  <tabstop>maleChoise</tabstop>
-  <tabstop>femaleChoise</tabstop>
+  <tabstop>middle_name_type</tabstop>
+  <tabstop>male</tabstop>
+  <tabstop>female</tabstop>
   <tabstop>born_place</tabstop>
-  <tabstop>checkBox</tabstop>
-  <tabstop>born_date</tabstop>
-  <tabstop>born_date_2</tabstop>
-  <tabstop>address_2</tabstop>
-  <tabstop>checkBox_5</tabstop>
+  <tabstop>born_place_type</tabstop>
+  <tabstop>born_date_from</tabstop>
+  <tabstop>born_date_to</tabstop>
+  <tabstop>address_city</tabstop>
+  <tabstop>address_sity_type</tabstop>
   <tabstop>address</tabstop>
-  <tabstop>checkBox_6</tabstop>
-  <tabstop>addictionList</tabstop>
-  <tabstop>spinBox</tabstop>
+  <tabstop>address_type</tabstop>
+  <tabstop>addiction_strat_date</tabstop>
   <tabstop>filterButton</tabstop>
   <tabstop>resetButton</tabstop>
   <tabstop>closeButton</tabstop>

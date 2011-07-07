@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>766</width>
-    <height>566</height>
+    <width>826</width>
+    <height>598</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Прибытие/убытие</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
@@ -52,16 +55,6 @@
     <string>Причина</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="leave_cause">
-   <property name="geometry">
-    <rect>
-     <x>310</x>
-     <y>30</y>
-     <width>320</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QDateEdit" name="arrive_date">
    <property name="geometry">
     <rect>
@@ -93,8 +86,8 @@
     <rect>
      <x>15</x>
      <y>80</y>
-     <width>741</width>
-     <height>441</height>
+     <width>800</width>
+     <height>480</height>
     </rect>
    </property>
    <property name="title">
@@ -105,8 +98,8 @@
      <rect>
       <x>100</x>
       <y>20</y>
-      <width>631</width>
-      <height>411</height>
+      <width>691</width>
+      <height>451</height>
      </rect>
     </property>
    </widget>
@@ -140,8 +133,8 @@
   <widget class="QPushButton" name="saveButton">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>530</y>
+     <x>342</x>
+     <y>564</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -153,8 +146,8 @@
   <widget class="QPushButton" name="deleteButton">
    <property name="geometry">
     <rect>
-     <x>390</x>
-     <y>530</y>
+     <x>442</x>
+     <y>564</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -166,8 +159,8 @@
   <widget class="QPushButton" name="closeButton">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>530</y>
+     <x>542</x>
+     <y>564</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -189,7 +182,53 @@
     <string>Долечился</string>
    </property>
   </widget>
+  <widget class="QComboBox" name="leave_cause_id">
+   <property name="geometry">
+    <rect>
+     <x>310</x>
+     <y>28</y>
+     <width>170</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="send_address_id">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>28</y>
+     <width>140</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="send_address_id_label">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>10</y>
+     <width>90</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Адрес отправки</string>
+   </property>
+  </widget>
  </widget>
+ <tabstops>
+  <tabstop>arrive_date</tabstop>
+  <tabstop>leave_date</tabstop>
+  <tabstop>leave_cause_id</tabstop>
+  <tabstop>is_cure</tabstop>
+  <tabstop>send_address_id</tabstop>
+  <tabstop>makeFoto</tabstop>
+  <tabstop>openFoto</tabstop>
+  <tabstop>saveButton</tabstop>
+  <tabstop>deleteButton</tabstop>
+  <tabstop>closeButton</tabstop>
+  <tabstop>fotoArea</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

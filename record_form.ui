@@ -6,21 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>812</width>
+    <width>836</width>
     <height>529</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string/>
+   <string>Редактирование записи</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <widget class="QTableWidget" name="arriveTable">
    <property name="geometry">
     <rect>
-     <x>453</x>
+     <x>475</x>
      <y>260</y>
      <width>351</width>
      <height>211</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(248, 248, 209);</string>
    </property>
    <property name="editTriggers">
     <set>QAbstractItemView::NoEditTriggers</set>
@@ -32,26 +38,11 @@
     <enum>QAbstractItemView::SelectRows</enum>
    </property>
    <property name="sortingEnabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <attribute name="horizontalHeaderStretchLastSection">
     <bool>true</bool>
    </attribute>
-   <column>
-    <property name="text">
-     <string>Прибыл</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Убыл</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Причина</string>
-    </property>
-   </column>
   </widget>
   <widget class="QDateEdit" name="born_date">
    <property name="geometry">
@@ -429,7 +420,7 @@
      <string>Началась</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="addiction_type">
+   <widget class="QComboBox" name="addiction_id">
     <property name="geometry">
      <rect>
       <x>36</x>
@@ -482,7 +473,7 @@
   <widget class="QGroupBox" name="arriveButtonBar">
    <property name="geometry">
     <rect>
-     <x>503</x>
+     <x>520</x>
      <y>473</y>
      <width>271</width>
      <height>51</height>
@@ -557,29 +548,6 @@
     <string>Примечания</string>
    </property>
   </widget>
-  <widget class="QGroupBox" name="fotoBox">
-   <property name="geometry">
-    <rect>
-     <x>460</x>
-     <y>10</y>
-     <width>341</width>
-     <height>241</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Фото прибытия</string>
-   </property>
-   <widget class="QGraphicsView" name="fotoArea">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>321</width>
-      <height>211</height>
-     </rect>
-    </property>
-   </widget>
-  </widget>
   <widget class="QPushButton" name="closeButton">
    <property name="geometry">
     <rect>
@@ -591,6 +559,29 @@
    </property>
    <property name="text">
     <string>Закрыть</string>
+   </property>
+  </widget>
+  <widget class="QGraphicsView" name="fotoArea">
+   <property name="geometry">
+    <rect>
+     <x>475</x>
+     <y>24</y>
+     <width>350</width>
+     <height>230</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_13">
+   <property name="geometry">
+    <rect>
+     <x>757</x>
+     <y>8</y>
+     <width>67</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Фотография</string>
    </property>
   </widget>
  </widget>
@@ -606,7 +597,7 @@
   <tabstop>address</tabstop>
   <tabstop>contact_phone</tabstop>
   <tabstop>contact_person</tabstop>
-  <tabstop>addiction_type</tabstop>
+  <tabstop>addiction_id</tabstop>
   <tabstop>addiction_start_date</tabstop>
   <tabstop>notes</tabstop>
   <tabstop>saveButton</tabstop>

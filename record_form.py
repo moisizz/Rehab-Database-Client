@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'record_form.ui'
 #
-# Created: Mon Jul 04 03:27:53 2011
+# Created: Thu Jul 07 03:29:27 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,22 +17,17 @@ except AttributeError:
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
-        Dialog.resize(812, 529)
-        Dialog.setWindowTitle(_fromUtf8(""))
+        Dialog.resize(836, 529)
+        Dialog.setModal(True)
         self.arriveTable = QtGui.QTableWidget(Dialog)
-        self.arriveTable.setGeometry(QtCore.QRect(453, 260, 351, 211))
+        self.arriveTable.setGeometry(QtCore.QRect(475, 260, 351, 211))
+        self.arriveTable.setStyleSheet(_fromUtf8("background-color: rgb(248, 248, 209);"))
         self.arriveTable.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.arriveTable.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.arriveTable.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.arriveTable.setObjectName(_fromUtf8("arriveTable"))
-        self.arriveTable.setColumnCount(3)
+        self.arriveTable.setColumnCount(0)
         self.arriveTable.setRowCount(0)
-        item = QtGui.QTableWidgetItem()
-        self.arriveTable.setHorizontalHeaderItem(0, item)
-        item = QtGui.QTableWidgetItem()
-        self.arriveTable.setHorizontalHeaderItem(1, item)
-        item = QtGui.QTableWidgetItem()
-        self.arriveTable.setHorizontalHeaderItem(2, item)
         self.arriveTable.horizontalHeader().setStretchLastSection(True)
         self.born_date = QtGui.QDateEdit(Dialog)
         self.born_date.setGeometry(QtCore.QRect(181, 67, 110, 22))
@@ -129,9 +124,9 @@ class Ui_Dialog(object):
         self.label_10 = QtGui.QLabel(self.addiction_group)
         self.label_10.setGeometry(QtCore.QRect(157, 26, 50, 13))
         self.label_10.setObjectName(_fromUtf8("label_10"))
-        self.addiction_type = QtGui.QComboBox(self.addiction_group)
-        self.addiction_type.setGeometry(QtCore.QRect(36, 22, 110, 22))
-        self.addiction_type.setObjectName(_fromUtf8("addiction_type"))
+        self.addiction_id = QtGui.QComboBox(self.addiction_group)
+        self.addiction_id.setGeometry(QtCore.QRect(36, 22, 110, 22))
+        self.addiction_id.setObjectName(_fromUtf8("addiction_id"))
         self.label_14 = QtGui.QLabel(self.addiction_group)
         self.label_14.setGeometry(QtCore.QRect(13, 26, 20, 13))
         self.label_14.setObjectName(_fromUtf8("label_14"))
@@ -142,7 +137,7 @@ class Ui_Dialog(object):
         self.deleteButton.setGeometry(QtCore.QRect(93, 493, 75, 23))
         self.deleteButton.setObjectName(_fromUtf8("deleteButton"))
         self.arriveButtonBar = QtGui.QGroupBox(Dialog)
-        self.arriveButtonBar.setGeometry(QtCore.QRect(503, 473, 271, 51))
+        self.arriveButtonBar.setGeometry(QtCore.QRect(520, 473, 271, 51))
         self.arriveButtonBar.setObjectName(_fromUtf8("arriveButtonBar"))
         self.arriveDeleteButton = QtGui.QPushButton(self.arriveButtonBar)
         self.arriveDeleteButton.setGeometry(QtCore.QRect(187, 20, 80, 23))
@@ -160,15 +155,15 @@ class Ui_Dialog(object):
         self.label_15 = QtGui.QLabel(Dialog)
         self.label_15.setGeometry(QtCore.QRect(10, 383, 63, 16))
         self.label_15.setObjectName(_fromUtf8("label_15"))
-        self.fotoBox = QtGui.QGroupBox(Dialog)
-        self.fotoBox.setGeometry(QtCore.QRect(460, 10, 341, 241))
-        self.fotoBox.setObjectName(_fromUtf8("fotoBox"))
-        self.fotoArea = QtGui.QGraphicsView(self.fotoBox)
-        self.fotoArea.setGeometry(QtCore.QRect(10, 20, 321, 211))
-        self.fotoArea.setObjectName(_fromUtf8("fotoArea"))
         self.closeButton = QtGui.QPushButton(Dialog)
         self.closeButton.setGeometry(QtCore.QRect(173, 493, 75, 23))
         self.closeButton.setObjectName(_fromUtf8("closeButton"))
+        self.fotoArea = QtGui.QGraphicsView(Dialog)
+        self.fotoArea.setGeometry(QtCore.QRect(475, 24, 350, 230))
+        self.fotoArea.setObjectName(_fromUtf8("fotoArea"))
+        self.label_13 = QtGui.QLabel(Dialog)
+        self.label_13.setGeometry(QtCore.QRect(757, 8, 67, 13))
+        self.label_13.setObjectName(_fromUtf8("label_13"))
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -182,8 +177,8 @@ class Ui_Dialog(object):
         Dialog.setTabOrder(self.passport_given, self.address)
         Dialog.setTabOrder(self.address, self.contact_phone)
         Dialog.setTabOrder(self.contact_phone, self.contact_person)
-        Dialog.setTabOrder(self.contact_person, self.addiction_type)
-        Dialog.setTabOrder(self.addiction_type, self.addiction_start_date)
+        Dialog.setTabOrder(self.contact_person, self.addiction_id)
+        Dialog.setTabOrder(self.addiction_id, self.addiction_start_date)
         Dialog.setTabOrder(self.addiction_start_date, self.notes)
         Dialog.setTabOrder(self.notes, self.saveButton)
         Dialog.setTabOrder(self.saveButton, self.deleteButton)
@@ -195,10 +190,8 @@ class Ui_Dialog(object):
         Dialog.setTabOrder(self.male, self.female)
 
     def retranslateUi(self, Dialog):
-        self.arriveTable.setSortingEnabled(False)
-        self.arriveTable.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("Dialog", "Прибыл", None, QtGui.QApplication.UnicodeUTF8))
-        self.arriveTable.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("Dialog", "Убыл", None, QtGui.QApplication.UnicodeUTF8))
-        self.arriveTable.horizontalHeaderItem(2).setText(QtGui.QApplication.translate("Dialog", "Причина", None, QtGui.QApplication.UnicodeUTF8))
+        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Редактирование записи", None, QtGui.QApplication.UnicodeUTF8))
+        self.arriveTable.setSortingEnabled(True)
         self.label.setText(QtGui.QApplication.translate("Dialog", "Имя", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("Dialog", "Фамилия", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("Dialog", "Отчество", None, QtGui.QApplication.UnicodeUTF8))
@@ -228,6 +221,6 @@ class Ui_Dialog(object):
         self.arriveAddButton.setText(QtGui.QApplication.translate("Dialog", "Добавить", None, QtGui.QApplication.UnicodeUTF8))
         self.arriveOpenButton.setText(QtGui.QApplication.translate("Dialog", "Открыть", None, QtGui.QApplication.UnicodeUTF8))
         self.label_15.setText(QtGui.QApplication.translate("Dialog", "Примечания", None, QtGui.QApplication.UnicodeUTF8))
-        self.fotoBox.setTitle(QtGui.QApplication.translate("Dialog", "Фото прибытия", None, QtGui.QApplication.UnicodeUTF8))
         self.closeButton.setText(QtGui.QApplication.translate("Dialog", "Закрыть", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_13.setText(QtGui.QApplication.translate("Dialog", "Фотография", None, QtGui.QApplication.UnicodeUTF8))
 
