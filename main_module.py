@@ -1,20 +1,14 @@
 # -*- coding: utf8 -*-
 
-'''
-Created on 29.06.2011
-
-@author: Моисеев Данил
-'''
 import sys
-import datetime
 import VideoCapture
 import datetime
 from os import remove
 from shutil import copyfile
-from model import Model
+from model import Model, Person, Arrive, Addiction, LeaveCause, SendAddress
 
 from PyQt4 import QtGui
-from PyQt4.QtCore import SIGNAL, QString, QDate, QTime
+from PyQt4.QtCore import SIGNAL, QString, QDate, QTime, QVariant, pyqtSignal
 
 from main_window import Ui_MainWindow as mainWindow
 import record_form
@@ -44,17 +38,25 @@ def set_field_value(field, value):
         
     elif field_type == 'QGroupBox':
         for choise in field.children():
-            if choise.objectName() == value:
+            if (choise.objectName() == 'male') and (value == Person.male):
+                choise.setChecked(True)
+            elif (choise.objectName() == 'female') and (value == Person.female):
                 choise.setChecked(True)
                 
     elif field_type == 'QDateEdit':
-        field.setDate(QDate.fromString(value.encode(), 'dd.MM.yyyy'))
+        field.setDate(QDate(value))
     
     elif field_type == 'QComboBox':
-        for i in range(0, field.count()):
-            if field.itemData(i) == value:
-                field.setCurrentIndex(i)
-                break
+        if field.objectName() == 'leave_cause_id':
+            for i in range(0, field.count()):
+                if field.itemData(i).toList()[0].toInt()[0] == value:
+                    field.setCurrentIndex(i)
+                    break
+        else:
+            for i in range(0, field.count()):
+                if field.itemData(i) == value:
+                    field.setCurrentIndex(i)
+                    break
             
     elif field_type == 'QCheckBox':
         field.setChecked(bool(value))  
@@ -69,12 +71,21 @@ def get_field_value(field):
         return unicode(field.text())
     elif field_type == 'QGroupBox':
         for choise in field.children():
-            if choise.isChecked():
-                return unicode(choise.objectName()) 
+            if choise.isChecked() and choise.objectName() == 'male':
+                return Person.male
+            elif choise.isChecked() and choise.objectName() == 'female':
+                return Person.female
     elif field_type == 'QDateEdit':
-        return unicode(field.date().toString("dd.MM.yyyy"))
+        return field.date().toPyDate()
     elif field_type == 'QComboBox':
-        return field.itemData(field.currentIndex()).toInt()[0]
+        if field.objectName() == 'leave_cause_id':
+            value = field.itemData(field.currentIndex()).toList()[0].toInt()[0]
+        else:
+            value = field.itemData(field.currentIndex()).toInt()[0]
+        if value == -1:
+            return None
+        else:
+            return value 
     elif field_type == 'QPlainTextEdit':
         return unicode(field.toPlainText())
     elif  field_type == 'QCheckBox':
@@ -82,15 +93,46 @@ def get_field_value(field):
 
 
 class Application(QtGui.QMainWindow):
+    databaseOpenSignal = pyqtSignal(Model)
+    
     def __init__(self, parent=None):
         self.app = QtGui.QApplication(sys.argv)
         QtGui.QWidget.__init__(self, parent)
         self.ui = mainWindow()
         self.ui.setupUi(self)
         self.ui.centralwidget.setLayout(self.ui.mainLayout)
+        self.ui.buttonBox.setLayout(self.ui.buttonBoxLayout)
+
+        #Список отображаемых колонок и их заголовков
+        self.displayed_person_columns = (
+         [{'name':'id','title':u'№ договора'},
+          {'name':'contract_date','title':u'Дата договора'},
+          {'name':'last_name','title':u'Фамилия'},
+          {'name':'first_name','title':u'Имя'},
+          {'name':'middle_name','title':u'Отчество'},
+          {'name':'gender','title':u'Пол'},
+          {'name':'born_date','title':u'Дата рождения'},
+          {'name':'born_place','title':u'Место рождения'},
+          {'name':'passport_series','title':u'Серия паспорта'},
+          {'name':'passport_number','title':u'№ Паспорта'},
+          {'name':'passport_given','title':u'Паспорт выдан'},
+          {'name':'address','title':u'Адрес прописки'},
+          {'name':'contact_phone','title':u'Контакт. телефон'},
+          {'name':'contact_person','title':u'Контакт. лицо'},
+          {'name':'addiction_id','title':u'Зависимость'},
+          {'name':'addiction_start_date','title':u'Длительность (лет)'},
+          {'name':'notes','title':u'Примечания'}])
         
         self.recordDialog = recordDialog(self)
         self.filterDialog = filterDialog(self)
+        
+        self.databaseOpenSignal.connect(self.recordDialog.database_opened_slot)
+        self.databaseOpenSignal.connect(self.recordDialog.arriveDialog.database_opened_slot)
+        self.databaseOpenSignal.connect(self.filterDialog.database_opened_slot)
+        self.connect(self.filterDialog.ui.resetButton, SIGNAL('clicked()'), self.fill_person_table)
+        
+        self.recordDialog.tableUpdated.connect(self.update_table_slot)
+        self.filterDialog.tableFiltered.connect(self.fill_person_table)
         
         self.connect(self.ui.mainTable,        SIGNAL('cellDoubleClicked(int, int)'), self.open_record_slot)
         self.connect(self.ui.createBaseAction, SIGNAL('triggered()'),                 self.create_base_slot)
@@ -102,8 +144,8 @@ class Application(QtGui.QMainWindow):
 
         #-------------Временное----------------
         """self.enable_buttons()
-        self.db = Model({'database_path':'database.db'})
-        self.addictions = self.db.get_addictions()
+        self.db = Model({'database_path':'small_test_database.db'})
+        self.databaseOpenSignal.emit(self.db)
         self.fill_person_table()"""
         #--------------------------------------
    
@@ -119,11 +161,15 @@ class Application(QtGui.QMainWindow):
         if path != '':
             if hasattr(self, 'db'):
                 self.db.close_connection()
+            
+            try:
+                self.db = Model({'database_path':path})
+            except IOError:
+                sys.exit(IOError)
                 
-            self.db = Model({'database_path':path})
+            self.databaseOpenSignal.emit(self.db)
             
             self.enable_buttons()
-            self.addictions = self.db.get_addictions()
             self.fill_person_table()
    
     def create_base_slot(self):
@@ -133,21 +179,31 @@ class Application(QtGui.QMainWindow):
         if path != '':
             if hasattr(self, 'db'):
                 self.db.close_connection()
+            
+            try:    
+                self.db = Model({'database_path':path})
+            except IOError:
+                sys.exit(IOError)
                 
-            self.db = Model({'database_path':path})
             self.db.create_empty_tables()
             
             self.enable_buttons()
+            self.fill_person_table()
             self.addictions = self.db.get_addictions()
+            
+            self.databaseOpenSignal.emit(self.db)
 
-    def open_record_slot(self):
+    def open_record_slot(self, row=None, col=None):
         """Реакция на нажатие кнопки Открыть"""
+        if (row == None) and (col == None):
+            row = self.ui.mainTable.currentRow()
+            col = self.ui.mainTable.currentColumn()
         
-        selected_row_num = self.ui.mainTable.currentRow()
+        table = self.ui.mainTable
         
-        if selected_row_num != -1:
-            selected_record_id = int(self.ui.mainTable.item(selected_row_num, 0).text())
-            record = self.db.get_person(selected_record_id)
+        if table.currentRow() != -1:
+            table_item = table.item(row, 0)
+            record = table_item.record
             
             self.recordDialog.open_record(record)
         
@@ -155,59 +211,108 @@ class Application(QtGui.QMainWindow):
         selected_record_num = self.ui.mainTable.currentRow()
         
         if selected_record_num != -1:
-            record_id = self.person_list[selected_record_num][0]
-        
             confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
                 u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
                 QtGui.QMessageBox.Ok | 
                 QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
             if confirm == QtGui.QMessageBox.Ok:
-                self.db.delete_record('person', record_id)
-                self.fill_person_table() # --------здесь нужно будет изменить
+                record = self.ui.mainTable.item(selected_record_num, 0).record
+                
+                try:
+                    self.db.delete_record(record)
+                except IOError:
+                    sys.exit(IOError)
+                    
+                self.update_table_slot(record, 'delete')
 
-    def fill_person_table(self):
-        """Заполнение таблицы людей"""
-        person_schema = self.db.person_schema
-        person_table = self.ui.mainTable
+    def update_table_slot(self, record, record_update_type):
+        table = self.ui.mainTable
         
+        if record_update_type == 'create':
+            table.setRowCount(table.rowCount()+1)
+            columns = self.displayed_person_columns
+            
+            new_record_index = table.rowCount()-1
+            
+            for j in range(0, len(columns)):
+                self.fill_cell(new_record_index, j, columns[j]['name'], record)
+            
+        else:
+            for i in range(0, table.rowCount()):
+                table_record = table.item(i, 0).record
+                
+                if record.id == table_record.id:
+                    if record_update_type == 'update':
+                        columns = self.displayed_person_columns
+                        
+                        for j in range(0, len(columns)):
+                            self.fill_cell(i, j, columns[j]['name'], record)
+                        
+                    elif record_update_type == 'delete':
+                        table.removeRow(i)
+                    
+                    break
+    
+    def fill_person_table(self, filter_values=None):
+        """Заполнение таблицы людей"""
+        person_list = self.db.get_person_list(filter_values)
+        columns = self.displayed_person_columns
+
         #Задаем количество колонок таблицы
-        person_table.setColumnCount(len(person_schema))
+        table = self.ui.mainTable
+        table.clear()
+        table.setColumnCount(len(columns))
 
         #Создаем шапку таблицы        
-        for i in range(0, len(person_schema)):
-            if person_schema[i]['title'] != '':
-                header_item = QtGui.QTableWidgetItem(unicode(person_schema[i]['title']))
-                person_table.setHorizontalHeaderItem(i, header_item)
-        
-        #Получаем список людей из базы
-        person_list = self.db.get_person_list()
-        self.person_list = person_list
-        
+        for i in range(0, len(columns)):
+            col_title = columns[i]['title']
+            header_item = QtGui.QTableWidgetItem(col_title)
+            header_item.setFont(QtGui.QFont("Trebuchet MS", pointSize=8))
+            table.setHorizontalHeaderItem(i, header_item)
+
         #Задаем число строк
-        person_table.setRowCount(len(person_list))
+        table.setRowCount(len(person_list))
+        table.records =[]
         
         #Заполняем таблицу
         for i in range(0, len(person_list)):
-            for j in range(0, len(person_schema)):
-                #Если колонка пола
-                if(person_schema[j]['col_name'] == 'gender'):
-                    if(person_list[i][j] == 'male'):
-                        value = u'муж.'
-                    else:
-                        value = u'жен.'
-                        
-                elif (person_schema[j]['col_name'] == 'addiction_type'):
-                    for row in self.addictions:
-                        if person_list[i][j] == row[0]:
-                            value = row[1]
-                    
-                else:
-                    value = unicode(person_list[i][j])
-                
-                item = QtGui.QTableWidgetItem(value)
-                person_table.setItem(i, j, item)
+            for j in range(0, len(columns)):
+                self.fill_cell(i, j, columns[j]['name'], person_list[i])
+              
+    def fill_cell(self, row, col, column_name, record):
 
+        #Если колонка пола
+        if(column_name == 'gender'):
+            if(getattr(record, column_name) == Person.male):
+                value = u'Муж.'
+            else:
+                value = u'Жен.'
+                
+        elif (column_name == 'addiction_id'):
+            value = record.addiction.name
+            
+        elif (column_name == 'addiction_start_date'):
+            start_date = QDate(getattr(record, column_name)).year()
+            current_date = QDate().currentDate().year()
+            
+            dlit = current_date - start_date
+            value = unicode(dlit)
+            
+        elif (column_name == 'contract_date') or (column_name == 'born_date'):
+            value = QDate(getattr(record, column_name)).toString('dd.MM.yyyy')
+            
+        else:
+            value = unicode(getattr(record, column_name))
+        
+        item = QtGui.QTableWidgetItem(value)
+        
+        #Сохраняем запись в объекте первой ячейки ряда
+        if col == 0:
+            item.record = record
+            
+        self.ui.mainTable.setItem(row, col, item)
+                
     def open_filter_slot(self):
         self.filterDialog.show()
 
@@ -219,12 +324,21 @@ class Application(QtGui.QMainWindow):
         
                 
 class recordDialog(QtGui.QDialog):
+    tableUpdated = pyqtSignal(Person, str)
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = record_form.Ui_Dialog()
         self.ui.setupUi(self)
         
+        self.displayed_arrive_columns = (
+        [{'name': 'arrive_date', 'title': u'Прибыл'},
+         {'name': 'leave_date', 'title': u'Убыл'},
+         {'name': 'leave_cause', 'title': u'Причина'},
+         {'name': 'is_cure', 'title': u'Долечился'},
+         {'name': 'send_address_id', 'title': u'Адрес отправки'}])
+        
         self.arriveDialog = arriveDialog(self)
+        self.arriveDialog.tableUpdated.connect(self.update_table_slot)
         
         self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close_button_slot)
         self.connect(self.ui.saveButton, SIGNAL('clicked()'), self.save_record_slot)
@@ -233,27 +347,22 @@ class recordDialog(QtGui.QDialog):
         self.connect(self.ui.last_name, SIGNAL('textEdited(QString)'), self.jump_from_last_name_field)
         self.connect(self.ui.first_name, SIGNAL('textEdited(QString)'), self.jump_from_first_name_field)
         self.connect(self.ui.middle_name, SIGNAL('textEdited(QString)'), self.jump_from_middle_name_field)
-        self.connect(self.ui.arriveTable, SIGNAL('itemSelectionChanged()'), self.change_arrive_foto)
+        self.connect(self.ui.arriveTable, SIGNAL('cellClicked(int, int)'), self.change_arrive_foto)
         self.connect(self.ui.arriveOpenButton, SIGNAL('clicked()'), self.open_arrive_record_slot)
         self.connect(self.ui.arriveAddButton, SIGNAL('clicked()'), self.open_empty_arrive_slot)
         self.connect(self.ui.arriveDeleteButton, SIGNAL('clicked()'), self.delete_arrive_record_slot)
         self.connect(self.ui.arriveTable,        SIGNAL('cellDoubleClicked(int, int)'), self.open_arrive_record_slot)
 
-    def fill_addiction_list(self):
-        addiction_list = self.db.get_addictions()
-        
-        self.ui.addiction_type.clear()
-        
-        for addiction in addiction_list:
-            self.ui.addiction_type.addItem(addiction[1], addiction[0])
+    def database_opened_slot(self, database):
+        self.close()
+        self.db = database
+        self.fill_addiction_list()
 
     def clear_fields(self):
-        self.db = self.parent().db
-        schema = self.db.person_schema
-        
-        for row in schema:
-            if hasattr(self.ui, row['col_name']):
-                field = getattr(self.ui, row['col_name'])
+        self.arriveDialog.close()
+        for row in self.record.get_columns_names():
+            if hasattr(self.ui, row):
+                field = getattr(self.ui, row)
                 clear_field(field)
                 
         self.ui.male.setChecked(True)
@@ -263,10 +372,19 @@ class recordDialog(QtGui.QDialog):
         
         scene = QtGui.QGraphicsScene()
         self.ui.fotoArea.setScene(scene) 
+            
+    def fill_addiction_list(self):
+        addiction_list = self.db.get_addictions()
+        
+        addiction_list_widget = self.ui.addiction_id
+        addiction_list_widget.clear()
+        
+        for i in range(0, len(addiction_list)):
+            addiction_list_widget.addItem(addiction_list[i].name, addiction_list[i].id)
  
     def disable_empty_part(self):
         self.ui.arriveTable.setEnabled(False)
-        self.ui.fotoBox.setEnabled(False)
+        self.ui.fotoArea.setEnabled(False)
         self.ui.arriveAddButton.setEnabled(False)
         self.ui.arriveDeleteButton.setEnabled(False)
         self.ui.arriveOpenButton.setEnabled(False)
@@ -274,7 +392,7 @@ class recordDialog(QtGui.QDialog):
     
     def enable_empty_part(self):
         self.ui.arriveTable.setEnabled(True)
-        self.ui.fotoBox.setEnabled(True)
+        self.ui.fotoArea.setEnabled(True)
         self.ui.arriveAddButton.setEnabled(True)
         self.ui.arriveDeleteButton.setEnabled(True)
         self.ui.arriveOpenButton.setEnabled(True)
@@ -282,21 +400,20 @@ class recordDialog(QtGui.QDialog):
  
     def open_record(self, record):
         """Открытие формы и заполнение ее значениями"""
+        self.record = record
+
         self.clear_fields()
-        self.db = self.parent().db
         self.ui.saveButton.setText(u'Сохранить')
  
-        self.record = record
-        schema = self.db.person_schema
         self.enable_empty_part()
-        self.fill_addiction_list()
         
-        for i in range(0, len(record)):
-            record_field_value = record[i]
-            col_name = schema[i]['col_name']
+        columns = record.get_columns_names()
+        
+        for column in columns:
+            record_field_value = getattr(record, column)
             
-            if hasattr(self.ui, col_name):
-                field = getattr(self.ui, col_name)
+            if hasattr(self.ui, column):
+                field = getattr(self.ui, column)
                 set_field_value(field, record_field_value)
 
         self.fill_person_arrive_table()
@@ -305,10 +422,10 @@ class recordDialog(QtGui.QDialog):
         self.show()
 
     def open_empty_record(self):
+        self.record = Person({})
         self.clear_fields()
         self.ui.saveButton.setText(u'Добавить')
         self.disable_empty_part()
-        self.fill_addiction_list()
         
         self.state = 'create_record'
         self.show()
@@ -325,42 +442,53 @@ class recordDialog(QtGui.QDialog):
                 
         return record_values
             
-    def save_record_slot(self): 
-        new_record_values = self.get_record_values()
-        
-        is_record_changed = False
-        
+    def save_record_slot(self):
         if self.state == 'open_record':
-            updated_values = {}
-            schema = self.db.person_schema
+            is_record_changed = False
+
+            record = self.record
+            columns = record.get_columns_names()
             
-            for i in range(0, len(schema)):
-                col_name = schema[i]['col_name']
+            for i in range(0, len(columns)):
+                col_name = columns[i]
                 
                 if hasattr(self.ui, col_name):
-                    old_value = self.record[i]
-                    new_value = new_record_values[col_name]
+                    old_value = getattr(self.record, col_name)
+                    new_value = get_field_value(getattr(self.ui, col_name))
                     
                     if old_value != new_value:
-                        updated_values[col_name] = new_value
                         is_record_changed = True
+                        setattr(record, col_name, new_value)
                         
             if is_record_changed:
-                self.record = self.db.update_record('person', self.record[0], updated_values)
-                self.parent().fill_person_table() #--- скорее всего здесь нужно что-то другое
+                self.db.update_records()
+                self.tableUpdated.emit(record, 'update')
         
         elif self.state == 'create_record':
+            new_record = self.record
+            values = {'contract_date':QDate().currentDate().toPyDate()}
+            
             #Запоминаем текущую дату для поля дата контракта
-            new_record_values['contract_date'] = str(QDate().currentDate().toString("dd.MM.yyyy"))
+            columns = self.record.get_columns_names()
+            for column_name in columns:
+                if hasattr(self.ui, column_name):
+                    field = getattr(self.ui, column_name)
+                    values[column_name] = get_field_value(field)
                 
-            self.record = self.db.insert_record('person', new_record_values)
+            new_record.set_values(values)
+                
+            try:
+                self.db.insert_record(new_record)
+            except IOError:
+                sys.exit(IOError)
+                
+            self.record = new_record
+            self.tableUpdated.emit(new_record, 'create')
             
             self.fill_person_arrive_table()
-            
             self.state = 'open_record'            
             self.enable_empty_part()
             self.ui.saveButton.setText(u'Сохранить')
-            self.parent().fill_person_table() #--- скорее всего здесь поонадобится что-то другое
 
     def delete_record_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
@@ -369,60 +497,99 @@ class recordDialog(QtGui.QDialog):
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
         if confirm == QtGui.QMessageBox.Ok:
-            self.db.delete_record('person', self.record[0])
-            
-            self.parent().fill_person_table() #------------ здесь будет что-то другое
-            
+            try:
+                self.db.delete_record(self.record)
+            except IOError:
+                sys.exit(IOError)
+                
+            self.tableUpdated.emit(self.record, 'delete')
             self.hide()
 
     def fill_person_arrive_table(self):
-        self.arrive_list = self.db.get_arrive_list(self.record[0])
-        arrive_list = self.arrive_list
-        schema = self.db.arrive_schema
+        arrive_list = self.record.arrives
+        table = self.ui.arriveTable
+        columns = self.displayed_arrive_columns
         
-        arrive_table = self.ui.arriveTable
-            
-        displayed_columns_count = 0
-        
-        for i in range(0, len(schema)):
-            if schema[i]['title'] != '':
-                displayed_columns_count += 1
-        
-        arrive_table.setColumnCount(displayed_columns_count)
+        table.setColumnCount(len(columns))
 
-        current_column_num = 0
-
-        for i in range(0, len(schema)):
-            if schema[i]['title'] != '':
-                header_item = QtGui.QTableWidgetItem(QString(schema[i]['title']))
-                arrive_table.setHorizontalHeaderItem(current_column_num, header_item)
-                current_column_num += 1
+        for i in range(0, len(columns)):
+            column_title = columns[i]['title']
+            header_item = QtGui.QTableWidgetItem(column_title)
+            table.setHorizontalHeaderItem(i, header_item)
                 
         if len(arrive_list) != 0:
-                
-            arrive_table.setRowCount(len(arrive_list))
+            table.setRowCount(len(arrive_list))
             
             for i in range(0, len(arrive_list)):
-                current_column_num = 0
-                for j in range(0, len(schema)):
-                    if schema[j]['title'] != '':
-                        if (schema[j]['col_name'] == 'is_cure') and (arrive_list[i][j] == 1):
-                            value = u'Да'
-                        elif (schema[j]['col_name'] == 'is_cure') and (arrive_list[i][j] == 0):
-                            value = u'Нет'
-                        else:
-                            value = unicode(arrive_list[i][j])
-                        item = QtGui.QTableWidgetItem(value)
-                        arrive_table.setItem(i, current_column_num, item)
-                        current_column_num += 1
+                for j in range(0, len(columns)):
+                    self.fill_cell(i, j, columns[j]['name'], arrive_list[i])
             
-            scene = QtGui.QGraphicsScene()
-            if arrive_list[0][-1] != '':
-                pixmap = QtGui.QPixmap("images/%s" % arrive_list[0][-1]). \
-                                                       scaledToHeight(self.ui.fotoArea.height()/2, 1). \
-                                                       scaledToWidth(self.ui.fotoArea.width()/2, 1)
-                scene.addPixmap(pixmap)
-            self.ui.fotoArea.setScene(scene)  
+            arrive_foto = arrive_list[0].foto
+            
+            if arrive_foto != None:
+                self.fill_arrive_foto(arrive_foto)
+
+    def fill_cell(self, row, col, column_name, record):
+        column_value = getattr(record, column_name)
+        
+        if (column_name == 'is_cure') and (column_value == 1):
+            value = u'Да'
+        elif (column_name == 'is_cure') and (column_value == 0):
+            value = u'Нет'
+        elif column_name == 'leave_cause':
+            value = record.leave_cause.cause
+        elif column_name == 'send_address_id':
+            column_value = record.send_address
+            if column_value == None:
+                value = u'нет'
+            else:
+                value = column_value.address
+        elif (column_name == 'arrive_date') or (column_name == 'leave_date'):
+            value = QDate(column_value).toString('dd.MM.yyyy')
+        else:
+            value = unicode(column_value)
+            
+        item = QtGui.QTableWidgetItem(value)
+        self.ui.arriveTable.setItem(row, col, item)
+        
+        if col == 0:
+            item.record = record
+                
+    def fill_arrive_foto(self, foto):
+        scene = QtGui.QGraphicsScene()           
+        pixmap = (QtGui.QPixmap("images/%s" % foto).
+                  scaledToHeight(self.ui.fotoArea.height()/1.12, 1).
+                  scaledToWidth(self.ui.fotoArea.width()/1.2, 1))
+        scene.addPixmap(pixmap)
+        self.ui.fotoArea.setScene(scene)
+
+    def update_table_slot(self, record, record_update_type):
+        table = self.ui.arriveTable
+        
+        if record_update_type == 'create':
+            table.setRowCount(table.rowCount()+1)
+            columns = self.displayed_arrive_columns
+            
+            new_record_index = table.rowCount()-1
+            
+            for j in range(0, len(columns)):
+                self.fill_cell(new_record_index, j, columns[j]['name'], record)
+            
+        else:
+            for i in range(0, table.rowCount()):
+                table_record = table.item(i, 0).record
+                
+                if record.id == table_record.id:
+                    if record_update_type == 'update':
+                        columns = self.displayed_arrive_columns
+                        
+                        for j in range(0, len(columns)):
+                            self.fill_cell(i, j, columns[j]['name'], record)
+                        
+                    elif record_update_type == 'delete':
+                        table.removeRow(i)
+                    
+                    break
 
     def detect_gender_slot(self):
         rd = self.ui
@@ -452,43 +619,46 @@ class recordDialog(QtGui.QDialog):
             self.ui.middle_name.setText(str[0:-1])
             self.ui.born_date.setFocus()
         
-    def change_arrive_foto(self):
-        selected_record_id = self.ui.arriveTable.currentRow()
+    def change_arrive_foto(self, row, col):
+        arrive_foto = self.ui.arriveTable.item(row, 0).record.foto
         
-        scene = QtGui.QGraphicsScene()
-        if self.arrive_list[selected_record_id][-1] != '':
-            pixmap = QtGui.QPixmap("images/%s" % self.arrive_list[selected_record_id][-1]). \
-                                                   scaledToHeight(self.ui.fotoArea.height()/1.4, 1). \
-                                                   scaledToWidth(self.ui.fotoArea.width()/1.4, 1)
-            scene.addPixmap(pixmap)
-        self.ui.fotoArea.setScene(scene)  
+        if arrive_foto != None:
+            self.fill_arrive_foto(arrive_foto)
         
-    def open_arrive_record_slot(self):
-        selected_record_num = self.ui.arriveTable.currentRow()
-        record = self.arrive_list[selected_record_num]
+    def open_arrive_record_slot(self, row=None, col=None):
+        if (row == None) and (col == None):
+            row = self.ui.arriveTable.currentRow()
+            col = self.ui.arriveTable.currentColumn()
         
-        self.arriveDialog.db = self.db
+        table_item = self.ui.arriveTable.item(row, 0)
+        record = table_item.record
+        
         self.arriveDialog.open_arrive_record(record)
         
     def open_empty_arrive_slot(self):
         self.arriveDialog.db = self.db
-        self.arriveDialog.open_empty_record()
+        self.arriveDialog.open_empty_record(self.record.id)
  
     def delete_arrive_record_slot(self):
         selected_record_num = self.ui.arriveTable.currentRow()
         
         if selected_record_num != -1:
-            record_id = self.arrive_list[selected_record_num][0]
-        
             confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
                 u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
                 QtGui.QMessageBox.Ok | 
                 QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
             if confirm == QtGui.QMessageBox.Ok:
-                self.db.delete_record('arrive', record_id)
-                self.fill_person_arrive_table() # --------здесь нужно будет изменить
- 
+                selected_row_index = self.ui.arriveTable.currentRow()
+                record = self.ui.arriveTable.item(selected_row_index, 0).record
+                
+                try:
+                    self.db.delete_record(record)
+                except IOError:
+                    sys.exit(IOError)
+                    
+                self.update_table_slot(record, 'delete')
+                
     def close_button_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение закрытия',
             u"Вы уверены, что хотите закрыть форму?\nВсе введенные вами данные будут потеряны!", 
@@ -496,36 +666,77 @@ class recordDialog(QtGui.QDialog):
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
         if confirm == QtGui.QMessageBox.Ok:
-            self.hide()
+            self.close()
         
         
 class arriveDialog(QtGui.QDialog):
+    tableUpdated = pyqtSignal(Arrive, str)
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = arrive_form.Ui_Dialog()
         self.ui.setupUi(self)
+        
         
         self.connect(self.ui.makeFoto, SIGNAL('clicked()'), self.make_foto_slot)
         self.connect(self.ui.openFoto, SIGNAL('clicked()'), self.open_foto_slot)
         self.connect(self.ui.saveButton, SIGNAL('clicked()'), self.save_record_slot)
         self.connect(self.ui.deleteButton, SIGNAL('clicked()'), self.delete_record_slot)
         self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close_slot)
+        self.connect(self.ui.leave_cause_id, SIGNAL('currentIndexChanged(int)'), self.leave_cause_changed_slot)
+
+    def database_opened_slot(self, database):
+        self.close()
+        self.db = database
+        self.fill_cause_list()
+        self.fill_send_address_list()
+        
+    def fill_cause_list(self):
+        
+        leave_cause_list_widget = self.ui.leave_cause_id
+        leave_cause_list_widget.clear()
+        
+        cause_list = self.db.get_leave_cause_list()
+        
+        for i in range(0, len(cause_list)):
+            leave_cause_list_widget.addItem(cause_list[i].cause, [cause_list[i].id, cause_list[i].with_address])
+            
+        leave_cause_list_widget.setCurrentIndex(0)
+        if not cause_list[0].with_address:
+            self.ui.send_address_id.setVisible(False)
+            self.ui.send_address_id_label.setVisible(False)
+    
+    def fill_send_address_list(self):
+        send_address_list_widget = self.ui.send_address_id
+        send_address_list_widget.clear()
+        
+        send_address_list = self.db.get_send_addresses()
+        
+        for i in range(0, len(send_address_list)):
+            send_address_list_widget.addItem(send_address_list[i].address, send_address_list[i].id)
 
     def clear_fields(self):
-        self.db = self.parent().db
-        schema = self.db.arrive_schema
+        self.ui.send_address_id_label.setVisible(False)
+        self.ui.send_address_id.setVisible(False)
         
-        for row in schema:
-            if hasattr(self.ui, row['col_name']):
-                field = getattr(self.ui, row['col_name'])
-                clear_field(field)
+        columns = self.record.get_columns_names()
+        
+        for column_name in columns:
+            if hasattr(self.ui, column_name):
+                field = getattr(self.ui, column_name)
+                
+                if column_name == 'leave_cause_id':
+                    field.setCurrentIndex(0)
+                    with_address = field.itemData(0).toList()[1]
+
+                    if with_address:
+                        self.ui.send_address_id.setVisible(True)
+                        self.ui.send_address_id_label.setVisible(True)
+                else:
+                    clear_field(field)
                 
         scene = QtGui.QGraphicsScene()
         self.ui.fotoArea.setScene(scene)  
         
-        if hasattr(self, 'fotoname'):
-            del(self.fotoname)
-    
     def get_record_values(self):
         schema = self.db.arrive_schema
         
@@ -547,23 +758,29 @@ class arriveDialog(QtGui.QDialog):
         self.record = record
         self.clear_fields()
         
-        schema = self.db.arrive_schema
+        columns = record.get_columns_names()
         
-        for i in range(0, len(schema)):
-            if(hasattr(self.ui, schema[i]['col_name'])):
-                field = getattr(self.ui, schema[i]['col_name'])
-                set_field_value(field, record[i])
+        for column in columns:
+            record_field_value = getattr(record, column)
+            
+            if hasattr(self.ui, column):
+                field = getattr(self.ui, column)
                 
-            if(schema[i]['col_name'] == 'foto'):
-                self.fotoname = record[i]
-                scene = QtGui.QGraphicsScene()
-                scene.addPixmap(QtGui.QPixmap("images/%s" % self.fotoname))
-                self.ui.fotoArea.setScene(scene) 
+                if column == 'leave_cause_id':
+                    if record.leave_cause.with_address:
+                        self.ui.send_address_id.setVisible(True)
+                        self.ui.send_address_id_label.setVisible(True)
+                
+                set_field_value(field, record_field_value)
+
+            if(column == 'foto'):
+                self.fill_arrive_foto(record_field_value) 
         
         self.state = 'open_record'
         self.show()
     
-    def open_empty_record(self):
+    def open_empty_record(self, person_id):
+        self.record = Arrive({'person_id':person_id})
         self.clear_fields()
         self.ui.deleteButton.setEnabled(False)
         self.ui.saveButton.setText(u'Добавить')
@@ -584,79 +801,100 @@ class arriveDialog(QtGui.QDialog):
         
         if confirmation:
             camera = VideoCapture.Device()
-            self.fotoname = QDate().currentDate().toString('dd.MM.yyyy') + '_' + \
-                            QTime().currentTime().toString('HH-mm-ss-zz') + '.png'
-                       
-                    
-            camera.saveSnapshot('images/%s' %  self.fotoname, timestamp=True)
+            fotoname = unicode(QDate().currentDate().toString('dd.MM.yyyy') + '_' +
+                               QTime().currentTime().toString('HH-mm-ss-zz') + '.png')
+            try:
+                camera.saveSnapshot('images/%s' %  fotoname, timestamp=True)
+            except IOError:
+                sys.exit(IOError)
             
-            scene = QtGui.QGraphicsScene()
-            scene.addPixmap(QtGui.QPixmap("images/%s" % self.fotoname))
-            self.ui.fotoArea.setScene(scene)   
+            if self.record.foto != None:
+                remove('images/%' % fotoname)
+                
+            self.record.foto = fotoname
+            
+        self.fill_arrive_foto(fotoname)
    
     def open_foto_slot(self):
         path = str(QtGui.QFileDialog.getOpenFileName(self, u"Открыть фото", u""))
     
         if path != '':
-            self.fotoname = QDate().currentDate().toString('dd.MM.yyyy') + '_' + \
-                            QTime().currentTime().toString('HH-mm-ss-zz') + '.png'
-                       
-            copyfile(path, 'images/%s' % self.fotoname)
+            fotoname = unicode(QDate().currentDate().toString('dd.MM.yyyy') + '_' +
+                               QTime().currentTime().toString('HH-mm-ss-zz') + '.png')
      
-            ar = self.ui
-            img = '<img width="%s" src="images/%s">' % (self.ui.fotoArea.width(),  self.fotoname)
-            ar.fotoArea.setText(img)
+        try:                  
+            copyfile(path, 'images/%s' % fotoname)
+        except IOError:
+            sys.exit(IOError)
         
-    def save_record_slot(self):
-        new_record_values = self.get_record_values()
-        schema = self.db.arrive_schema
-        
-        if self.state == 'open_record':
-            new_record_values['id'] = self.record[0]
-            new_record_values['person_id'] = self.record[1]
-            updated_values = {}
-            is_changed = False
-            for i in range(0, len(schema)):
-                col_name = schema[i]['col_name']
-                
-                old_value = self.record[i]
-                new_value = new_record_values[col_name]
-                
-                if old_value != new_value:
-                    updated_values[col_name] = new_value
-                    is_changed = True
-        
-            if is_changed:
-                if hasattr(new_record_values, 'foto'):
-                    for i in range(0, len(schema)):
-                        if schema[i]['col_name'] == 'foto':
-                            old_foto = self.record[i]
-                            remove('images/%s' % old_foto)
-                            
-                self.record = self.db.update_record('arrive', new_record_values['id'], new_record_values)
-                self.parent().fill_person_arrive_table()
-        
-        if self.state == 'create_record':
-            new_record_values['person_id'] = self.parent().record[0]
-            self.record = self.db.insert_record('arrive', new_record_values)
+        if self.record.foto != None:
+            remove('images/%s' % fotoname)
             
-            self.ui.saveButton.setText(u'Сохнатить')
-            self.ui.deleteButton.setEnabled(True)
-            self.parent().fill_person_arrive_table()
-            self.state = 'open_record'
+        self.record.foto = fotoname
      
+        self.fill_arrive_foto(fotoname)
+            
+    def save_record_slot(self):
+        if self.state == 'open_record':
+            is_record_changed = False
+            
+            record = self.record
+            columns = record.get_columns_names()
+            
+            for i in range(0, len(columns)):
+                col_name = columns[i]
+                
+                if hasattr(self.ui, col_name):
+                    field = getattr(self.ui, col_name)
+                    old_value = getattr(self.record, col_name)
+                    new_value = get_field_value(field)
+                    
+                    if old_value != new_value:
+                        is_record_changed = True
+                        setattr(record, col_name, new_value)
+                        
+            if is_record_changed:
+                self.db.update_records()
+                self.tableUpdated.emit(record, 'update')
+        
+        elif self.state == 'create_record':
+            new_record = self.record
+            values = {}
+            
+            columns = self.record.get_columns_names()
+            for column_name in columns:
+                if hasattr(self.ui, column_name):
+                    field = getattr(self.ui, column_name)
+                    values[column_name] = get_field_value(field)
+                
+            new_record.set_values(values)
+        
+            try:
+                self.db.insert_record(new_record)
+            except IOError:
+                sys.exit(IOError)
+            
+            self.record = new_record
+            self.tableUpdated.emit(new_record, 'create')
+            
+            self.state = 'open_record'            
+            self.ui.saveButton.setText(u'Сохранить')
+            self.ui.deleteButton.setEnabled(True)
+     
+    def fill_arrive_foto(self, foto):
+        scene = QtGui.QGraphicsScene()
+        scene.addPixmap(QtGui.QPixmap("images/%s" % foto))
+        self.ui.fotoArea.setScene(scene)
+ 
     def delete_record_slot(self):
-        record_id = self.record[0]
-    
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
             u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
             QtGui.QMessageBox.Ok | 
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
         if confirm == QtGui.QMessageBox.Ok:
-            self.db.delete_record('arrive', record_id)
-            self.parent().fill_person_arrive_table() # --------здесь нужно будет изменить
-            self.hide()
+            self.db.delete_record(self.record)
+            self.tableUpdated.emmit(self.record, 'delete')
         
     def close_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение закрытия формы',
@@ -665,14 +903,75 @@ class arriveDialog(QtGui.QDialog):
                 QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
     
         if confirm == QtGui.QMessageBox.Ok:
+            if self.state == 'create_record' and self.record.foto != None:
+                tmp_fotoname = self.record.foto
+                remove('images/%s' % tmp_fotoname)
+            
             self.hide()
     
-     
+    def leave_cause_changed_slot(self, item_index):
+        widget = self.ui.leave_cause_id
+        item_data = widget.itemData(item_index).toList()
+        
+        is_with_address = item_data[1].toBool()
+        
+        if is_with_address:
+            self.ui.send_address_id.setVisible(True)
+            self.ui.send_address_id_label.setVisible(True)
+            self.ui.send_address_id.setCurrentIndex(0)
+        else:
+            self.ui.send_address_id.setVisible(False)
+            self.ui.send_address_id_label.setVisible(False)
+            self.ui.send_address_id.setCurrentIndex(-1)
+
+
 class filterDialog(QtGui.QDialog):
+    tableFiltered = pyqtSignal(list)
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = filter_form.Ui_Dialog()
         self.ui.setupUi(self)
+        
+        self.connect(self.ui.filterButton, SIGNAL('clicked()'), self.filter_slot)
+
+    def database_opened_slot(self, database):
+        self.close()
+        self.db = database
+        self.fill_addiction_list()
+
+    def filter_slot(self):
+        columns = self.parent().displayed_person_columns
+        
+        filter_values = []
+        
+        for i in range(0, len(columns)):
+            column_name = columns[i]['name']
+            if hasattr(self.ui, column_name):
+                field = getattr(self.ui, column_name)
+                
+                value = get_field_value(field)
+                
+                if (value != '') and (value != None) and (value != -1):
+                    filter_value = {'column_name':column_name, 'value':value}
+                    
+                    if hasattr(self.ui, "%s_type" % field.objectName()):
+                        filter_value['type'] = getattr(self.ui, "%s_type" % field.objectName()).isChecked()
+                    
+                    filter_values.append(filter_value)
+
+        self.tableFiltered.emit(filter_values)
+
+    def fill_addiction_list(self):
+        addiction_list = self.db.get_addictions()
+        
+        widget = self.ui.addiction_type_id
+        widget.clear()
+        
+        widget.addItem(u'Все', -1)
+        widget.setCurrentIndex(0)
+        
+        for addiction in addiction_list:
+            widget.addItem(addiction.name, addiction.id)
 
 if __name__ == '__main__':    
     app = Application()
