@@ -809,7 +809,7 @@ class arriveDialog(QtGui.QDialog):
                 sys.exit(IOError)
             
             if self.record.foto != None:
-                remove('images/%' % fotoname)
+                remove('images/%s' % self.record.foto)
                 
             self.record.foto = fotoname
             
