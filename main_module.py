@@ -6,6 +6,7 @@ import datetime
 from os import remove
 from shutil import copyfile
 from model import Model, Person, Arrive, Addiction, LeaveCause, SendAddress
+from sqlalchemy.orm.query import Query
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import SIGNAL, QString, QDate, QTime, QVariant, pyqtSignal
@@ -26,7 +27,7 @@ def clear_field(field):
     elif field_type == 'QComboBox':
         field.setCurrentIndex(0)
     elif field_type == 'QCheckBox':
-        field.setChecked(True)
+        field.setChecked(False)
     else:
         field.clear()
         
@@ -129,7 +130,7 @@ class Application(QtGui.QMainWindow):
         self.databaseOpenSignal.connect(self.recordDialog.database_opened_slot)
         self.databaseOpenSignal.connect(self.recordDialog.arriveDialog.database_opened_slot)
         self.databaseOpenSignal.connect(self.filterDialog.database_opened_slot)
-        self.connect(self.filterDialog.ui.resetButton, SIGNAL('clicked()'), self.fill_person_table)
+        #self.connect(self.filterDialog.ui.resetButton, SIGNAL('clicked()'), self.fill_person_table)
         
         self.recordDialog.tableUpdated.connect(self.update_table_slot)
         self.filterDialog.tableFiltered.connect(self.fill_person_table)
@@ -143,10 +144,10 @@ class Application(QtGui.QMainWindow):
         self.connect(self.ui.filterButton,     SIGNAL('clicked()'),                   self.open_filter_slot)
 
         #-------------Временное----------------
-        """self.enable_buttons()
+        self.enable_buttons()
         self.db = Model({'database_path':'small_test_database.db'})
         self.databaseOpenSignal.emit(self.db)
-        self.fill_person_table()"""
+        self.fill_person_table()
         #--------------------------------------
    
     def execute(self):
@@ -254,9 +255,13 @@ class Application(QtGui.QMainWindow):
                     
                     break
     
-    def fill_person_table(self, filter_values=None):
+    def fill_person_table(self, query=None):
         """Заполнение таблицы людей"""
-        person_list = self.db.get_person_list(filter_values)
+        if query == None:
+            person_list = self.db.get_person_list()
+        else:
+            person_list = query.all()
+            
         columns = self.displayed_person_columns
 
         #Задаем количество колонок таблицы
@@ -926,53 +931,154 @@ class arriveDialog(QtGui.QDialog):
 
 
 class filterDialog(QtGui.QDialog):
-    tableFiltered = pyqtSignal(list)
+    tableFiltered = pyqtSignal(Query)
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = filter_form.Ui_Dialog()
         self.ui.setupUi(self)
         
+        self.filtering_columns = ([
+            {'name':'last_name',            'field_name':'last_name',               'with_type_check':True},
+            {'name':'first_name',           'field_name':'first_name',              'with_type_check':True},
+            {'name':'middle_name',          'field_name':'middle_name',             'with_type_check':True},
+            {'name':'gender',               'field_name':'gender',                  'with_type_check':False},
+            {'name':'passport_series',      'field_name':'passport_series',         'with_type_check':False},
+            {'name':'passport_number',      'field_name':'passport_number',         'with_type_check':False},
+            {'name':'born_place',           'field_name':'born_place',              'with_type_check':True},
+            {'name':'born_date',            'field_name':('born_date_from', 
+                                                          'born_date_to'),          'with_type_check':False},
+            {'name':'address',              'field_name':'address_city',            'with_type_check':True},
+            {'name':'address',              'field_name':'address',                 'with_type_check':True},
+            {'name':'addiction_id',         'field_name':'addiction_type',          'with_type_check':False},
+            {'name':'addiction_start_date', 'field_name':('addiction_duration_from',
+                                                          'addiction_duration_to'),  'with_type_check':False},
+                                   ])
+        
         self.connect(self.ui.filterButton, SIGNAL('clicked()'), self.filter_slot)
+        self.connect(self.ui.resetButton, SIGNAL('clicked()'), self.reset_filter_slot)
+        self.connect(self.ui.born_date_enabled, SIGNAL('stateChanged(int)'), self.switch_born_date)
 
     def database_opened_slot(self, database):
         self.close()
         self.db = database
         self.fill_addiction_list()
+        self.clear_fields()
+
+    def clear_fields(self):
+        columns = self.filtering_columns
+        
+        for column in columns:
+            column_name = column['name']
+            
+            if column_name == 'gender':
+                self.ui.male.setChecked(True)
+                self.ui.female.setChecked(True)
+            elif column_name == 'born_date' or column_name == 'addiction_start_date':
+                first_field  = getattr(self.ui, column['field_name'][0])
+                second_field = getattr(self.ui, column['field_name'][1])
+                
+                clear_field(first_field)
+                clear_field(second_field)
+                
+                if column_name == 'born_date':
+                    self.ui.born_date_enabled.setChecked(False)
+            else:
+                field = getattr(self.ui, column['field_name'])
+                clear_field(field)
+                
+                if column['with_type_check']:
+                    type_field = getattr(self.ui, column['field_name'] + '_type')
+                    clear_field(type_field)
 
     def filter_slot(self):
-        columns = self.parent().displayed_person_columns
+        columns = self.filtering_columns
         
-        filter_values = []
+        query = self.db.get_person_list_query()
         
-        for i in range(0, len(columns)):
-            column_name = columns[i]['name']
-            if hasattr(self.ui, column_name):
-                field = getattr(self.ui, column_name)
-                
-                value = get_field_value(field)
-                
-                if (value != '') and (value != None) and (value != -1):
-                    filter_value = {'column_name':column_name, 'value':value}
+        for column in columns:
+            column_name = column['name']
+            field_name = column['field_name']
+        
+            if column_name == 'gender':
+                if self.ui.male.isChecked() and self.ui.female.isChecked():
+                    query = query.filter("(gender=:male_gender or gender=:female_gender)").params(male_gender=Person.male, female_gender=Person.female)
                     
-                    if hasattr(self.ui, "%s_type" % field.objectName()):
-                        filter_value['type'] = getattr(self.ui, "%s_type" % field.objectName()).isChecked()
+                elif self.ui.male.isChecked():
+                    query = query.filter("gender=:male_gender").params(male_gender=Person.male)
                     
-                    filter_values.append(filter_value)
+                elif self.ui.female.isChecked():
+                    query = query.filter("gender=:female_gender").params(female_gender=Person.female)
+                    
+            elif column_name == 'born_date':
+                if self.ui.born_date_enabled.isChecked():
+                    from_date = get_field_value(getattr(self.ui, field_name[0]))
+                    to_date = get_field_value(getattr(self.ui, field_name[1]))
+                    
+                    query = query.filter("(date(born_date) between :from_date and :to_date)").params(from_date=from_date, to_date=to_date)
+                
+            elif column_name == 'addiction_start_date':
+                addiction_duration_from = get_field_value(getattr(self.ui, field_name[0]))
+                addiction_duration_to   = get_field_value(getattr(self.ui, field_name[1]))
+                
+                if (addiction_duration_from == '') and (addiction_duration_to != ''):
+                    addiction_duration_from = 0
+                    addiction_duration_to = int(addiction_duration_to)
+                    
+                if (addiction_duration_from != '') and (addiction_duration_to == ''):
+                    addiction_duration_from = int(addiction_duration_from)
+                    addiction_duration_to   = addiction_duration_from
+                
+                if (addiction_duration_from != '') and (addiction_duration_to != ''):
+                    addiction_duration_from = int(addiction_duration_from)
+                    addiction_duration_to   = int(addiction_duration_to)
+                
+                if (addiction_duration_from != '') or (addiction_duration_to != ''):
+                    query = (query.filter("((date('now') - date(addiction_start_date)) between :duration_from and :duration_to)")
+                                  .params(duration_from=addiction_duration_from, duration_to=addiction_duration_to))
+            else:
+                value = get_field_value(getattr(self.ui, field_name))
+                
+                if value != '' and value != None and value != -1:
+                    if column['with_type_check']:
+                        type_field = getattr(self.ui, field_name+'_type')
+                        if type_field.isChecked():
+                            type = 'where'
+                        else:
+                            type = 'like'
+                    else:
+                        type = 'where'
+                        
+                    if type == 'like':
+                        query = query.filter("lower(%s) like lower(:%s)" % (column_name, column_name)).params(**{column_name:'%%%s%%' % value})
+                    elif type == 'where':
+                        query = query.filter("%s=:%s" % (column_name, column_name)).params(**{column_name:value})
+                
+        self.tableFiltered.emit(query)
 
-        self.tableFiltered.emit(filter_values)
+    def reset_filter_slot(self):
+        self.clear_fields()
+        self.tableFiltered.emit(self.db.get_person_list_query())
 
     def fill_addiction_list(self):
         addiction_list = self.db.get_addictions()
-        
-        widget = self.ui.addiction_type_id
+        widget = self.ui.addiction_type
         widget.clear()
         
         widget.addItem(u'Все', -1)
-        widget.setCurrentIndex(0)
         
         for addiction in addiction_list:
             widget.addItem(addiction.name, addiction.id)
 
+        widget.setCurrentIndex(0)
+    
+    def switch_born_date(self, state):
+        state = bool(state)
+        self.ui.born_date_from.setEnabled(state)
+        self.ui.born_date_to.setEnabled(state)
+        self.ui.born_date_label.setEnabled(state)
+        self.ui.born_date_label_from.setEnabled(state)
+        self.ui.born_date_label_to.setEnabled(state)
+        
 if __name__ == '__main__':    
     app = Application()
     app.execute()

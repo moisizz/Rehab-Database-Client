@@ -142,7 +142,11 @@ class Model(object):
     def create_connection(self, database_path):
         '''Создает новое соединение'''
         self.engine = create_engine('sqlite:///%s' % database_path, echo=False)
-        self.session = sessionmaker(bind=self.engine)()
+        self.conn = self.engine.connect()
+        
+        self.conn.connection.create_function('lower',1,lambda x:x.lower())
+        
+        self.session = sessionmaker(bind=self.conn)()
         self.person_metadata = Person.metadata
         self.arrive_metadata = Arrive.metadata
         self.leave_cause_metadata = LeaveCause.metadata
@@ -189,22 +193,11 @@ class Model(object):
         self.session.delete(record)
         self.session.commit()
     
-    def get_person_list(self, filter_values=None):
-        q = self.session.query(Person)
-        
-        if (filter_values == None) or (len(filter_values) == 0):
-            return q.order_by(Person.id).all()
-        else:
-            for filter_value in filter_values:
-                column_name = filter_value['column_name']
-                column_value = filter_value['value']
-
-                if (not filter_value.has_key('type')) or (not filter_value['type']):
-                    q = q.filter("%s like :%s_value" % (column_name, column_name)).params(**{column_name+'_value':"%%%s%%" % column_value})
-                elif filter_value['type'] == True:
-                    q = q.filter("%s=:%s_value" % (column_name, column_name)).params(**{column_name+'_value':column_value})
-                    
-            return q.all()
+    def get_person_list_query(self):
+        return self.session.query(Person)
+    
+    def get_person_list(self):
+        return self.get_person_list_query().all()
     
     def get_addictions(self):
         return self.session.query(Addiction).order_by(Addiction.name).all()
@@ -306,6 +299,8 @@ def generate_db(db, record_count):
 if __name__ == '__main__':
     #t = time()
     db = Model({'database_path':'small_test_database.db'})
+    #(julianday(date('now', '-%s', 'start of year')) = julianday(date(addiction_start_date, 'start of year')))
+    print db.conn.execute("SELECT addiction_start_date FROM person WHERE (date('now') - date(addiction_start_date)) between 1 and 1").fetchall()
     #generate_db(db, 500)
     """
     print "Время открытия = %s" % (time() - t)

@@ -7,17 +7,20 @@
     <x>0</x>
     <y>0</y>
     <width>464</width>
-    <height>418</height>
+    <height>407</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string/>
+   <string>Фильтр базы</string>
   </property>
   <widget class="QDateEdit" name="born_date_from">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>180</x>
-     <y>160</y>
+     <y>150</y>
      <width>110</width>
      <height>22</height>
     </rect>
@@ -65,11 +68,14 @@
     <string>Отчество</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_4">
+  <widget class="QLabel" name="born_date_label">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>180</x>
-     <y>140</y>
+     <y>130</y>
      <width>84</width>
      <height>16</height>
     </rect>
@@ -108,6 +114,9 @@
     <property name="text">
      <string>Муж.</string>
     </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
    </widget>
    <widget class="QCheckBox" name="female">
     <property name="geometry">
@@ -121,13 +130,16 @@
     <property name="text">
      <string>Жен.</string>
     </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
    </widget>
   </widget>
   <widget class="QLabel" name="address_2">
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>220</y>
+     <y>210</y>
      <width>86</width>
      <height>13</height>
     </rect>
@@ -140,7 +152,7 @@
    <property name="geometry">
     <rect>
      <x>13</x>
-     <y>140</y>
+     <y>130</y>
      <width>87</width>
      <height>13</height>
     </rect>
@@ -153,7 +165,7 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>240</y>
+     <y>230</y>
      <width>221</width>
      <height>20</height>
     </rect>
@@ -193,7 +205,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>160</y>
+     <y>150</y>
      <width>140</width>
      <height>20</height>
     </rect>
@@ -203,7 +215,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>380</y>
+     <y>370</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -216,7 +228,7 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>380</y>
+     <y>370</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -229,7 +241,7 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>380</y>
+     <y>370</y>
      <width>75</width>
      <height>23</height>
     </rect>
@@ -242,7 +254,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>300</y>
+     <y>290</y>
      <width>91</width>
      <height>16</height>
     </rect>
@@ -251,11 +263,14 @@
     <string>Тип зависимости</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_6">
+  <widget class="QLabel" name="born_date_label_from">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>168</x>
-     <y>163</y>
+     <y>153</y>
      <width>12</width>
      <height>16</height>
     </rect>
@@ -264,11 +279,14 @@
     <string>С</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_8">
+  <widget class="QLabel" name="born_date_label_to">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>301</x>
-     <y>162</y>
+     <y>152</y>
      <width>17</width>
      <height>16</height>
     </rect>
@@ -278,10 +296,13 @@
    </property>
   </widget>
   <widget class="QDateEdit" name="born_date_to">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>320</x>
-     <y>160</y>
+     <y>150</y>
      <width>110</width>
      <height>22</height>
     </rect>
@@ -294,7 +315,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>220</y>
+     <y>210</y>
      <width>88</width>
      <height>16</height>
     </rect>
@@ -307,7 +328,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>240</y>
+     <y>230</y>
      <width>140</width>
      <height>20</height>
     </rect>
@@ -317,7 +338,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>180</y>
+     <y>170</y>
      <width>120</width>
      <height>17</height>
     </rect>
@@ -365,11 +386,11 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="address_sity_type">
+  <widget class="QCheckBox" name="address_city_type">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>260</y>
+     <y>250</y>
      <width>120</width>
      <height>17</height>
     </rect>
@@ -382,7 +403,7 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>260</y>
+     <y>250</y>
      <width>120</width>
      <height>17</height>
     </rect>
@@ -394,8 +415,8 @@
   <widget class="QLabel" name="label_11">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>300</y>
+     <x>190</x>
+     <y>290</y>
      <width>136</width>
      <height>16</height>
     </rect>
@@ -404,24 +425,178 @@
     <string>Длительность (в годах)</string>
    </property>
   </widget>
-  <widget class="QSpinBox" name="addiction_strat_date">
+  <widget class="QComboBox" name="addiction_type">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>320</y>
-     <width>61</width>
+     <x>10</x>
+     <y>310</y>
+     <width>141</width>
      <height>22</height>
     </rect>
    </property>
   </widget>
-  <widget class="QComboBox" name="addiction_type_id">
+  <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>320</y>
-     <width>141</width>
-     <height>22</height>
+     <x>160</x>
+     <y>70</y>
+     <width>234</width>
+     <height>47</height>
     </rect>
+   </property>
+   <property name="title">
+    <string>Паспорт</string>
+   </property>
+   <widget class="QLabel" name="label_12">
+    <property name="geometry">
+     <rect>
+      <x>116</x>
+      <y>20</y>
+      <width>46</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Номер</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="passport_series">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>17</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="inputMask">
+     <string>####; </string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="passport_number">
+    <property name="geometry">
+     <rect>
+      <x>151</x>
+      <y>17</y>
+      <width>71</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="inputMask">
+     <string>######; </string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>14</x>
+      <y>20</y>
+      <width>40</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Серия</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QCheckBox" name="born_date_enabled">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>172</y>
+     <width>71</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>включить</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="addiction_duration_from">
+   <property name="geometry">
+    <rect>
+     <x>188</x>
+     <y>310</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="inputMask">
+    <string>####; </string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="addiction_duration_to">
+   <property name="geometry">
+    <rect>
+     <x>289</x>
+     <y>310</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="inputMask">
+    <string>####; </string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="born_date_label_from_2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>312</y>
+     <width>15</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>От</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="born_date_label_from_3">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>258</x>
+     <y>313</y>
+     <width>20</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="born_date_label_from_4">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>266</x>
+     <y>311</y>
+     <width>15</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>До</string>
    </property>
   </widget>
  </widget>
@@ -439,10 +614,9 @@
   <tabstop>born_date_from</tabstop>
   <tabstop>born_date_to</tabstop>
   <tabstop>address_city</tabstop>
-  <tabstop>address_sity_type</tabstop>
+  <tabstop>address_city_type</tabstop>
   <tabstop>address</tabstop>
   <tabstop>address_type</tabstop>
-  <tabstop>addiction_strat_date</tabstop>
   <tabstop>filterButton</tabstop>
   <tabstop>resetButton</tabstop>
   <tabstop>closeButton</tabstop>
