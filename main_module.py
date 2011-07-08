@@ -1051,7 +1051,7 @@ class filterDialog(QtGui.QDialog):
                     if type == 'like':
                         query = query.filter("lower(%s) like lower(:%s)" % (column_name, column_name)).params(**{column_name:'%%%s%%' % value})
                     elif type == 'where':
-                        query = query.filter("%s=:%s" % (column_name, column_name)).params(**{column_name:value})
+                        query = query.filter("lower(%s)=:lower(%s)" % (column_name, column_name)).params(**{column_name:value})
                 
         self.tableFiltered.emit(query)
 
