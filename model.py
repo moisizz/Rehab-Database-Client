@@ -218,6 +218,18 @@ class Model(object):
 def generate_db(db, record_count):
     db.create_empty_tables()
     
+    db.person_metadata.drop_all(db.engine)
+    db.arrive_metadata.drop_all(db.engine)
+    db.send_address_metadata.drop_all(db.engine)
+    db.addiction_metadata.drop_all(db.engine)
+    db.leave_cause_metadata.drop_all(db.engine)
+         
+    db.person_metadata.create_all(db.engine)
+    db.arrive_metadata.create_all(db.engine)
+    db.send_address_metadata.create_all(db.engine)
+    db.addiction_metadata.create_all(db.engine)
+    db.leave_cause_metadata.create_all(db.engine)
+    
     male_first_names = [u'Сергей', u'Юрий', u'Петр', u'Василий', u'Степан', u'Павел', u'Владимир']
     female_first_names = [u'Татьяна', u'Анастасия', u'Любовь', u'Полина', u'Алевтина']
     
@@ -294,8 +306,6 @@ def generate_db(db, record_count):
 if __name__ == '__main__':
     #t = time()
     db = Model({'database_path':'small_test_database.db'})
-    print db.session.query(Person).filter('id=:id').params(id=1).all()
-    #db.create_empty_tables()
     #generate_db(db, 500)
     """
     print "Время открытия = %s" % (time() - t)
