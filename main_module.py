@@ -1185,7 +1185,6 @@ class catalogsDialog(QtGui.QDialog):
         
         self.connect(self.ui.addictionTable, SIGNAL('cellDoubleClicked(int, int)'), self.update_addiction)
         
-        
     def database_opened_slot(self, database):
         self.close()
         self.db = database
@@ -1256,9 +1255,17 @@ class catalogsDialog(QtGui.QDialog):
     
             if confirm == QtGui.QMessageBox.Ok:
                     record = self.ui.addictionTable.item(current_index, 0).record
-                    self.db.delete_record(record)
-                    self.ui.addictionTable.removeRow(current_index)
-                    self.addictionsChanged.emit()
+                    
+                    addicted_count = len(record.addicted)
+                    
+                    if addicted_count == 0:
+                        self.db.delete_record(record)
+                        self.ui.addictionTable.removeRow(current_index)
+                        self.addictionsChanged.emit()
+                    else:
+                        QtGui.QMessageBox.question(self, u'Ошибка',
+                            u"Невозможно удалить запись. В базе остались люди с этой зависимостью.\n", 
+                            QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
     
     def add_address(self):
         new_address_name, confirm = QtGui.QInputDialog.getText(self, u'Добавление адреса', 
@@ -1298,9 +1305,18 @@ class catalogsDialog(QtGui.QDialog):
     
             if confirm == QtGui.QMessageBox.Ok:
                     record = self.ui.addressTable.item(current_index, 0).record
-                    self.db.delete_record(record)
-                    self.ui.addressTable.removeRow(current_index)
-                    self.addressesChanged.emit()
+                    
+                    causes_count = record.causes
+                    
+                    if len(causes_count) == 0:
+                        self.db.delete_record(record)
+                        self.ui.addressTable.removeRow(current_index)
+                        self.addressesChanged.emit()
+                    else:
+                        QtGui.QMessageBox.question(self, u'Ошибка',
+                            u"Невозможно удалить запись.\nВ базе остались записи прихода/ухода с этим адресом отправки.", 
+                            QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                        
 
 if __name__ == '__main__':    
     app = Application()

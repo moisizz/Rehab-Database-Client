@@ -10,7 +10,7 @@ from time import time
 from sqlalchemy import create_engine, Table, Column, Integer, Unicode, UnicodeText, SmallInteger, Date, MetaData, Boolean, ForeignKey
 from sqlalchemy.orm import sessionmaker, relation, backref, eagerload
 from sqlalchemy.ext.declarative import declarative_base
-
+        
 Base = declarative_base()
 
 class Person(Base):
@@ -34,11 +34,11 @@ class Person(Base):
     contact_phone = Column(Unicode)
     contact_person = Column(Unicode)
     addiction_start_date = Column(Date)
-    addiction_id = Column(Integer, ForeignKey('addiction.id'), nullable=True)
+    addiction_id = Column(Integer, ForeignKey('addiction.id', ondelete='RESTRICT'), nullable=True)
     notes = Column(UnicodeText)
 
-    arrives = relation("Arrive", order_by="Arrive.arrive_date", uselist=True)
-    addiction = relation("Addiction", order_by="Addiction.name", uselist=False)
+    arrives = relation("Arrive", order_by="Arrive.arrive_date", uselist=True, cascade='all, delete-orphan')
+    addiction = relation("Addiction", order_by="Addiction.name", uselist=False, backref='addicted')
 
     def __init__(self, values):
         self.set_values(values)
@@ -61,13 +61,13 @@ class Arrive(Base):
     person_id = Column(Integer, ForeignKey('person.id'))
     arrive_date = Column(Date)
     leave_date = Column(Date)
-    leave_cause_id = Column(Integer, ForeignKey('leave_cause.id'), nullable=True)
-    send_address_id = Column(Integer, ForeignKey('send_address.id'), nullable=True)
+    leave_cause_id = Column(Integer, ForeignKey('leave_cause.id', ondelete='RESTRICT'), nullable=True)
+    send_address_id = Column(Integer, ForeignKey('send_address.id', ondelete='RESTRICT'), nullable=True)
     is_cure = Column(Boolean)
     foto = Column(Unicode)
 
     leave_cause = relation("LeaveCause", order_by="LeaveCause.cause", uselist=False)
-    send_address = relation("SendAddress", order_by="SendAddress.address", uselist=False)
+    send_address = relation("SendAddress", order_by="SendAddress.address", uselist=False, backref='causes')
 
     def __init__(self, values):
         self.set_values(values)
@@ -299,9 +299,7 @@ def generate_db(db, record_count):
 if __name__ == '__main__':
     #t = time()
     db = Model({'database_path':'small_test_database.db'})
-    #(julianday(date('now', '-%s', 'start of year')) = julianday(date(addiction_start_date, 'start of year')))
-    print db.conn.execute("SELECT addiction_start_date FROM person WHERE (date('now') - date(addiction_start_date)) between 1 and 1").fetchall()
-    #generate_db(db, 500)
+    generate_db(db, 500)
     """
     print "Время открытия = %s" % (time() - t)
     t = time()
