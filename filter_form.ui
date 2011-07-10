@@ -386,19 +386,6 @@
     <string>точное совпадение</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="address_city_type">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>250</y>
-     <width>120</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>точное совпадение</string>
-   </property>
-  </widget>
   <widget class="QCheckBox" name="address_type">
    <property name="geometry">
     <rect>
@@ -614,7 +601,6 @@
   <tabstop>born_date_from</tabstop>
   <tabstop>born_date_to</tabstop>
   <tabstop>address_city</tabstop>
-  <tabstop>address_city_type</tabstop>
   <tabstop>address</tabstop>
   <tabstop>address_type</tabstop>
   <tabstop>filterButton</tabstop>

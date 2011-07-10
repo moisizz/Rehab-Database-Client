@@ -3,11 +3,13 @@
 import sqlite3
 import copy
 
+from datetime import datetime
+
 from datetime import date
 from random import choice, randrange
 from time import time
 
-from sqlalchemy import create_engine, Table, Column, Integer, Unicode, UnicodeText, SmallInteger, Date, MetaData, Boolean, ForeignKey
+from sqlalchemy import create_engine, Table, Column, Integer, Unicode, UnicodeText, SmallInteger, Date, DateTime, MetaData, Boolean, ForeignKey
 from sqlalchemy.orm import sessionmaker, relation, backref, eagerload
 from sqlalchemy.ext.declarative import declarative_base
         
@@ -20,7 +22,7 @@ class Person(Base):
     female = 2
 
     id = Column(Integer, primary_key=True)
-    contract_date = Column(Date)
+    contract_date = Column(DateTime, nullable=False)
     last_name = Column(Unicode)
     first_name = Column(Unicode)
     middle_name = Column(Unicode)
@@ -36,6 +38,11 @@ class Person(Base):
     addiction_start_date = Column(Date)
     addiction_id = Column(Integer, ForeignKey('addiction.id', ondelete='RESTRICT'), nullable=True)
     notes = Column(UnicodeText)
+
+    __mapper_args__ = {
+    'version_id_col': contract_date,
+    'version_id_generator': lambda v:datetime.now()
+    }
 
     arrives = relation("Arrive", order_by="Arrive.arrive_date", uselist=True, cascade='all, delete-orphan')
     addiction = relation("Addiction", order_by="Addiction.name", uselist=False, backref='addicted')
@@ -234,6 +241,9 @@ def generate_db(db, record_count):
     
     session = db.session
 
+    born_places = [u'г. Чайковский', u'г. Пермь', u'село Ольховка', u'село Барда', u'г. Березники', u'г. Лысьва', u'г. Чусовой']
+    addresses = [u'г. Чайковский ул. Сосновая 5, кв. 4', u'г. Пермь, ул. Карла-Маркса 3\\2, кв. 6', u'г. Чайковский']
+
     addictions = [Addiction(u'Наркотики'), Addiction(u'Дезоморфин'), Addiction(u'Прочее'), Addiction(u'Табак')]
     
     send_addresses = [SendAddress(u'Екатеринбург'), SendAddress(u'Чайковский-Завьялово'), 
@@ -261,17 +271,16 @@ def generate_db(db, record_count):
             first_name = choice(female_first_names)
             middle_name = choice(female_middle_names)
         
-        person = Person({'contract_date':date(randrange(1999, 2009), randrange(1, 13), randrange(1, 28)), 
-                         'last_name':last_name,
+        person = Person({'last_name':last_name,
                          'first_name':first_name,
                          'middle_name':middle_name,
                          'gender':gender,
                          'born_date':date(randrange(1950, 2000), randrange(1, 13), randrange(1, 28)),
-                         'born_place':u'г. Чайковский',
+                         'born_place':choice(born_places),
                          'passport_series':randrange(1111, 9999),
                          'passport_number':randrange(111111, 999999),
                          'passport_given':u'Чайковским ГОВД',
-                         'address':u'г. Чайковский, ул. Какая-то, д. такой-то', 
+                         'address':choice(addresses), 
                          'contact_phone':u'1-23-45',
                          'contact_person':u'Сестра',
                          'addiction_start_date':date(randrange(2000, 2010), randrange(1, 13), randrange(1, 28)),
@@ -299,7 +308,7 @@ def generate_db(db, record_count):
 if __name__ == '__main__':
     #t = time()
     db = Model({'database_path':'small_test_database.db'})
-    generate_db(db, 500)
+    generate_db(db, 30)
     """
     print "Время открытия = %s" % (time() - t)
     t = time()

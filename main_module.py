@@ -2,17 +2,15 @@
 
 import sys
 import VideoCapture
-import datetime
-from os import remove, getcwdu, mkdir, open
-from os.path import basename, splitext, join, isdir, isfile
-from shutil import copyfile
-from model import Model, Person, Arrive, Addiction, LeaveCause, SendAddress
+from os import remove, getcwdu, mkdir
+from os.path import join, isdir, isfile
+from model import Model, Person, Arrive, Addiction, SendAddress
 from sqlalchemy.orm.query import Query
 from PIL import Image
 import yaml
 
 from PyQt4 import QtGui
-from PyQt4.QtCore import SIGNAL, QString, QDate, QTime, QVariant, pyqtSignal
+from PyQt4.QtCore import SIGNAL, QDate, QTime, pyqtSignal, Qt
 
 from main_window import Ui_MainWindow as mainWindow
 import record_form
@@ -107,6 +105,9 @@ class Application(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self.ui.centralwidget.setLayout(self.ui.mainLayout)
         self.ui.buttonBox.setLayout(self.ui.buttonBoxLayout)
+
+        self.ui.recordCount = QtGui.QLabel(u'') 
+        self.ui.statusbar.addPermanentWidget(self.ui.recordCount)
 
         if not isfile('config.yaml'):
             self.generate_new_configuration()
@@ -290,7 +291,7 @@ class Application(QtGui.QMainWindow):
             
             for j in range(0, len(columns)):
                 self.fill_cell(new_record_index, j, columns[j]['name'], record)
-            
+                
         else:
             for i in range(0, table.rowCount()):
                 table_record = table.item(i, 0).record
@@ -306,6 +307,8 @@ class Application(QtGui.QMainWindow):
                         table.removeRow(i)
                     
                     break
+                
+        self.ui.recordCount.setText(u'Количество записей = %s' % self.ui.mainTable.rowCount())
     
     def fill_person_table(self, query=None):
         """Заполнение таблицы людей"""
@@ -313,7 +316,11 @@ class Application(QtGui.QMainWindow):
             person_list = self.db.get_person_list()
         else:
             person_list = query.all()
-            
+        
+        record_count = len(person_list)
+        
+        self.ui.recordCount.setText(u'Количество записей = %s' % record_count)
+        
         columns = self.displayed_person_columns
 
         #Задаем количество колонок таблицы
@@ -388,6 +395,21 @@ class recordDialog(QtGui.QDialog):
         QtGui.QWidget.__init__(self, parent)
         self.ui = record_form.Ui_Dialog()
         self.ui.setupUi(self)
+        
+        self.setWindowFlags(Qt.Window)
+        
+        self.ui.mainLayout = QtGui.QHBoxLayout(self)
+        
+        self.ui.rightSideLayout = QtGui.QVBoxLayout()
+        self.ui.rightSideLayout.addWidget(self.ui.fotoLabel)
+        self.ui.rightSideLayout.addWidget(self.ui.fotoArea)
+        self.ui.rightSideLayout.addWidget(self.ui.arriveTable)
+        self.ui.rightSideLayout.addWidget(self.ui.arriveButtonBar) 
+        
+        self.ui.mainLayout.addWidget(self.ui.mainBox)
+        self.ui.mainLayout.addLayout(self.ui.rightSideLayout)
+        
+        
         
         self.config = self.parent().config
         
@@ -527,7 +549,7 @@ class recordDialog(QtGui.QDialog):
         
         elif self.state == 'create_record':
             new_record = self.record
-            values = {'contract_date':QDate().currentDate().toPyDate()}
+            values = {}
             
             #Запоминаем текущую дату для поля дата контракта
             columns = self.record.get_columns_names()
@@ -720,6 +742,9 @@ class recordDialog(QtGui.QDialog):
                     self.db.delete_record(record)
                 except IOError:
                     sys.exit(IOError)
+                
+                if record.foto != None:
+                    remove(join(self.config['paths']['images'], record.foto))
                     
                 self.update_table_slot(record, 'delete')
                 
@@ -739,6 +764,16 @@ class arriveDialog(QtGui.QDialog):
         QtGui.QWidget.__init__(self, parent)
         self.ui = arrive_form.Ui_Dialog()
         self.ui.setupUi(self)
+        
+        self.setWindowFlags(Qt.Window)
+        
+        self.ui.mainLayout = QtGui.QVBoxLayout(self)
+        self.ui.mainLayout.addWidget(self.ui.fieldsBox)
+        
+        self.ui.fotoBox.setLayout(self.ui.fotoLayout)
+        self.ui.mainLayout.addWidget(self.ui.fotoBox)
+        
+        self.ui.mainLayout.addWidget(self.ui.buttonBox)
         
         self.config = self.parent().config
         
@@ -895,26 +930,26 @@ class arriveDialog(QtGui.QDialog):
         self.fill_arrive_foto(fotoname)
    
     def open_foto_slot(self):
-        path = unicode(QtGui.QFileDialog.getOpenFileName(self, u"Открыть фото", unicode(getcwdu())))
+        path = unicode(QtGui.QFileDialog.getOpenFileName(self, u"Открыть фото", unicode(getcwdu()), u'Фотографии (*.png *.jpeg *.jpg *.gif)'))
     
         if path != '':
             fotoname = self.generate_image_filename()
             img_dir = self.get_images_directory()
             fotopath = join(img_dir, fotoname)
             
-        try:
-            src_image = Image.open(path, 'r')
-            src_image.save(fotopath, 'PNG')
+            try:
+                src_image = Image.open(path, 'r')
+                src_image.save(fotopath, 'PNG')
+                
+            except Exception:
+                sys.exit(Exception.message)
             
-        except Exception:
-            sys.exit(Exception.message)
-        
-        if self.record.foto != None:
-            remove(img_dir, self.record.foto)
-            
-        self.record.foto = fotoname
-     
-        self.fill_arrive_foto(fotoname)
+            if self.record.foto != None:
+                remove(img_dir, self.record.foto)
+                
+            self.record.foto = fotoname
+         
+            self.fill_arrive_foto(fotoname)
             
     def save_record_slot(self):
         if self.state == 'open_record':
@@ -979,7 +1014,11 @@ class arriveDialog(QtGui.QDialog):
 
         if confirm == QtGui.QMessageBox.Ok:
             self.db.delete_record(self.record)
-            self.tableUpdated.emmit(self.record, 'delete')
+            
+            if self.record.foto != None:
+                remove(join(self.config['paths']['images'], self.record.foto))
+                
+            self.tableUpdated.emit(self.record, 'delete')
         
     def close_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение закрытия формы',
@@ -1017,6 +1056,8 @@ class filterDialog(QtGui.QDialog):
         self.ui = filter_form.Ui_Dialog()
         self.ui.setupUi(self)
         
+        self.setWindowFlags(Qt.Tool)
+        
         self.filtering_columns = ([
             {'name':'last_name',            'field_name':'last_name',               'with_type_check':True},
             {'name':'first_name',           'field_name':'first_name',              'with_type_check':True},
@@ -1027,7 +1068,7 @@ class filterDialog(QtGui.QDialog):
             {'name':'born_place',           'field_name':'born_place',              'with_type_check':True},
             {'name':'born_date',            'field_name':('born_date_from', 
                                                           'born_date_to'),          'with_type_check':False},
-            {'name':'address',              'field_name':'address_city',            'with_type_check':True},
+            {'name':'address',              'field_name':'address_city',            'with_type_check':False},
             {'name':'address',              'field_name':'address',                 'with_type_check':True},
             {'name':'addiction_id',         'field_name':'addiction_type',          'with_type_check':False},
             {'name':'addiction_start_date', 'field_name':('addiction_duration_from',
@@ -1118,9 +1159,10 @@ class filterDialog(QtGui.QDialog):
                                   .params(duration_from=addiction_duration_from, duration_to=addiction_duration_to))
             else:
                 value = get_field_value(getattr(self.ui, field_name))
-                
                 if value != '' and value != None and value != -1:
-                    if column['with_type_check']:
+                    if column['field_name'] == 'address_city':
+                        type = 'like'
+                    elif column['with_type_check']:
                         type_field = getattr(self.ui, field_name+'_type')
                         if type_field.isChecked():
                             type = 'where'
@@ -1132,8 +1174,11 @@ class filterDialog(QtGui.QDialog):
                     if type == 'like':
                         query = query.filter("lower(%s) like lower(:%s)" % (column_name, column_name)).params(**{column_name:'%%%s%%' % value})
                     elif type == 'where':
-                        query = query.filter("lower(%s)=:lower(%s)" % (column_name, column_name)).params(**{column_name:value})
-                
+                        if value.__class__.__name__ == 'str' or value.__class__.__name__ == 'unicode':
+                            query = query.filter("lower(%s)=lower(:%s)" % (column_name, column_name)).params(**{column_name:value})
+                        else:
+                            query = query.filter("%s=:%s" % (column_name, column_name)).params(**{column_name:value})
+                    
         self.tableFiltered.emit(query)
 
     def reset_filter_slot(self):
@@ -1168,6 +1213,8 @@ class catalogsDialog(QtGui.QDialog):
         QtGui.QWidget.__init__(self, parent)
         self.ui = catalogs_form.Ui_Dialog()
         self.ui.setupUi(self)
+        
+        self.setWindowFlags(Qt.Window)
         
         self.mainLayout = QtGui.QVBoxLayout(self)
         self.mainLayout.addWidget(self.ui.tabs)

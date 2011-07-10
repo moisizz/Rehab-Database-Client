@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Sun Jul 10 02:58:45 2011
+# Created: Sun Jul 10 16:11:55 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -65,7 +65,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.refreshButton.sizePolicy().hasHeightForWidth())
         self.refreshButton.setSizePolicy(sizePolicy)
-        self.refreshButton.setMaximumSize(QtCore.QSize(150, 50))
+        self.refreshButton.setMaximumSize(QtCore.QSize(150, 26))
         self.refreshButton.setObjectName(_fromUtf8("refreshButton"))
         self.buttonBoxLayout.addWidget(self.refreshButton)
         self.openButton = QtGui.QPushButton(self.horizontalLayoutWidget)
@@ -75,7 +75,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.openButton.sizePolicy().hasHeightForWidth())
         self.openButton.setSizePolicy(sizePolicy)
-        self.openButton.setMaximumSize(QtCore.QSize(150, 50))
+        self.openButton.setMaximumSize(QtCore.QSize(150, 26))
         self.openButton.setObjectName(_fromUtf8("openButton"))
         self.buttonBoxLayout.addWidget(self.openButton)
         self.addButton = QtGui.QPushButton(self.horizontalLayoutWidget)
@@ -85,7 +85,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.addButton.sizePolicy().hasHeightForWidth())
         self.addButton.setSizePolicy(sizePolicy)
-        self.addButton.setMaximumSize(QtCore.QSize(150, 50))
+        self.addButton.setMaximumSize(QtCore.QSize(150, 26))
         self.addButton.setObjectName(_fromUtf8("addButton"))
         self.buttonBoxLayout.addWidget(self.addButton)
         self.deleteButton = QtGui.QPushButton(self.horizontalLayoutWidget)
@@ -95,7 +95,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.deleteButton.sizePolicy().hasHeightForWidth())
         self.deleteButton.setSizePolicy(sizePolicy)
-        self.deleteButton.setMaximumSize(QtCore.QSize(150, 50))
+        self.deleteButton.setMaximumSize(QtCore.QSize(150, 26))
         self.deleteButton.setObjectName(_fromUtf8("deleteButton"))
         self.buttonBoxLayout.addWidget(self.deleteButton)
         self.filterButton = QtGui.QPushButton(self.horizontalLayoutWidget)
@@ -105,7 +105,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.filterButton.sizePolicy().hasHeightForWidth())
         self.filterButton.setSizePolicy(sizePolicy)
-        self.filterButton.setMaximumSize(QtCore.QSize(150, 50))
+        self.filterButton.setMaximumSize(QtCore.QSize(150, 26))
         self.filterButton.setObjectName(_fromUtf8("filterButton"))
         self.buttonBoxLayout.addWidget(self.filterButton)
         self.buttonBar.addWidget(self.buttonBox)

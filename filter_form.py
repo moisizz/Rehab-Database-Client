@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'filter_form.ui'
 #
-# Created: Fri Jul 08 21:55:11 2011
+# Created: Sun Jul 10 17:54:34 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -113,9 +113,6 @@ class Ui_Dialog(object):
         self.middle_name_type = QtGui.QCheckBox(Dialog)
         self.middle_name_type.setGeometry(QtCore.QRect(310, 40, 120, 17))
         self.middle_name_type.setObjectName(_fromUtf8("middle_name_type"))
-        self.address_city_type = QtGui.QCheckBox(Dialog)
-        self.address_city_type.setGeometry(QtCore.QRect(10, 250, 120, 17))
-        self.address_city_type.setObjectName(_fromUtf8("address_city_type"))
         self.address_type = QtGui.QCheckBox(Dialog)
         self.address_type.setGeometry(QtCore.QRect(170, 250, 120, 17))
         self.address_type.setObjectName(_fromUtf8("address_type"))
@@ -181,8 +178,7 @@ class Ui_Dialog(object):
         Dialog.setTabOrder(self.born_place_type, self.born_date_from)
         Dialog.setTabOrder(self.born_date_from, self.born_date_to)
         Dialog.setTabOrder(self.born_date_to, self.address_city)
-        Dialog.setTabOrder(self.address_city, self.address_city_type)
-        Dialog.setTabOrder(self.address_city_type, self.address)
+        Dialog.setTabOrder(self.address_city, self.address)
         Dialog.setTabOrder(self.address, self.address_type)
         Dialog.setTabOrder(self.address_type, self.filterButton)
         Dialog.setTabOrder(self.filterButton, self.resetButton)
@@ -210,7 +206,6 @@ class Ui_Dialog(object):
         self.last_name_type.setText(QtGui.QApplication.translate("Dialog", "точное совпадение", None, QtGui.QApplication.UnicodeUTF8))
         self.first_name_type.setText(QtGui.QApplication.translate("Dialog", "точное совпадение", None, QtGui.QApplication.UnicodeUTF8))
         self.middle_name_type.setText(QtGui.QApplication.translate("Dialog", "точное совпадение", None, QtGui.QApplication.UnicodeUTF8))
-        self.address_city_type.setText(QtGui.QApplication.translate("Dialog", "точное совпадение", None, QtGui.QApplication.UnicodeUTF8))
         self.address_type.setText(QtGui.QApplication.translate("Dialog", "точное совпадение", None, QtGui.QApplication.UnicodeUTF8))
         self.label_11.setText(QtGui.QApplication.translate("Dialog", "Длительность (в годах)", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("Dialog", "Паспорт", None, QtGui.QApplication.UnicodeUTF8))
