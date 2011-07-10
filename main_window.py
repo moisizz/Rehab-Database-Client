@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Thu Jul 07 02:25:05 2011
+# Created: Sun Jul 10 02:58:45 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -58,6 +58,16 @@ class Ui_MainWindow(object):
         self.buttonBoxLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
         self.buttonBoxLayout.setMargin(0)
         self.buttonBoxLayout.setObjectName(_fromUtf8("buttonBoxLayout"))
+        self.refreshButton = QtGui.QPushButton(self.horizontalLayoutWidget)
+        self.refreshButton.setEnabled(False)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.refreshButton.sizePolicy().hasHeightForWidth())
+        self.refreshButton.setSizePolicy(sizePolicy)
+        self.refreshButton.setMaximumSize(QtCore.QSize(150, 50))
+        self.refreshButton.setObjectName(_fromUtf8("refreshButton"))
+        self.buttonBoxLayout.addWidget(self.refreshButton)
         self.openButton = QtGui.QPushButton(self.horizontalLayoutWidget)
         self.openButton.setEnabled(False)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Fixed)
@@ -106,6 +116,8 @@ class Ui_MainWindow(object):
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menu = QtGui.QMenu(self.menubar)
         self.menu.setObjectName(_fromUtf8("menu"))
+        self.editMeny = QtGui.QMenu(self.menubar)
+        self.editMeny.setObjectName(_fromUtf8("editMeny"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -116,11 +128,19 @@ class Ui_MainWindow(object):
         self.exitAction.setObjectName(_fromUtf8("exitAction"))
         self.createBaseAction = QtGui.QAction(MainWindow)
         self.createBaseAction.setObjectName(_fromUtf8("createBaseAction"))
+        self.imagesPathEditAction = QtGui.QAction(MainWindow)
+        self.imagesPathEditAction.setObjectName(_fromUtf8("imagesPathEditAction"))
+        self.catalogEditAction = QtGui.QAction(MainWindow)
+        self.catalogEditAction.setEnabled(False)
+        self.catalogEditAction.setObjectName(_fromUtf8("catalogEditAction"))
         self.menu.addAction(self.createBaseAction)
         self.menu.addAction(self.openBaseAction)
         self.menu.addSeparator()
         self.menu.addAction(self.exitAction)
+        self.editMeny.addAction(self.imagesPathEditAction)
+        self.editMeny.addAction(self.catalogEditAction)
         self.menubar.addAction(self.menu.menuAction())
+        self.menubar.addAction(self.editMeny.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QObject.connect(self.exitAction, QtCore.SIGNAL(_fromUtf8("triggered()")), MainWindow.close)
@@ -129,12 +149,16 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Новый свет - База данных", None, QtGui.QApplication.UnicodeUTF8))
         self.mainTable.setSortingEnabled(True)
+        self.refreshButton.setText(QtGui.QApplication.translate("MainWindow", "Обновить", None, QtGui.QApplication.UnicodeUTF8))
         self.openButton.setText(QtGui.QApplication.translate("MainWindow", "Открыть", None, QtGui.QApplication.UnicodeUTF8))
         self.addButton.setText(QtGui.QApplication.translate("MainWindow", "Добавить", None, QtGui.QApplication.UnicodeUTF8))
         self.deleteButton.setText(QtGui.QApplication.translate("MainWindow", "Удалить", None, QtGui.QApplication.UnicodeUTF8))
         self.filterButton.setText(QtGui.QApplication.translate("MainWindow", "Фильтр", None, QtGui.QApplication.UnicodeUTF8))
         self.menu.setTitle(QtGui.QApplication.translate("MainWindow", "Файл", None, QtGui.QApplication.UnicodeUTF8))
+        self.editMeny.setTitle(QtGui.QApplication.translate("MainWindow", "Правка", None, QtGui.QApplication.UnicodeUTF8))
         self.openBaseAction.setText(QtGui.QApplication.translate("MainWindow", "Открыть базу...", None, QtGui.QApplication.UnicodeUTF8))
         self.exitAction.setText(QtGui.QApplication.translate("MainWindow", "Выход", None, QtGui.QApplication.UnicodeUTF8))
         self.createBaseAction.setText(QtGui.QApplication.translate("MainWindow", "Создать пустую базу...", None, QtGui.QApplication.UnicodeUTF8))
+        self.imagesPathEditAction.setText(QtGui.QApplication.translate("MainWindow", "Изменить директоррию фотографий...", None, QtGui.QApplication.UnicodeUTF8))
+        self.catalogEditAction.setText(QtGui.QApplication.translate("MainWindow", "Изменить справочники...", None, QtGui.QApplication.UnicodeUTF8))
 

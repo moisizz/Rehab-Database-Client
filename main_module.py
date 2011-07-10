@@ -3,10 +3,13 @@
 import sys
 import VideoCapture
 import datetime
-from os import remove
+from os import remove, getcwdu, mkdir, open
+from os.path import basename, splitext, join, isdir, isfile
 from shutil import copyfile
 from model import Model, Person, Arrive, Addiction, LeaveCause, SendAddress
 from sqlalchemy.orm.query import Query
+from PIL import Image
+import yaml
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import SIGNAL, QString, QDate, QTime, QVariant, pyqtSignal
@@ -15,6 +18,7 @@ from main_window import Ui_MainWindow as mainWindow
 import record_form
 import arrive_form
 import filter_form
+import catalogs_form
 
 #Три функции для взаимодействия с разлизчными полями Qt формы
 def clear_field(field):
@@ -55,7 +59,7 @@ def set_field_value(field, value):
                     break
         else:
             for i in range(0, field.count()):
-                if field.itemData(i) == value:
+                if field.itemData(i).toInt()[0] == value:
                     field.setCurrentIndex(i)
                     break
             
@@ -104,6 +108,11 @@ class Application(QtGui.QMainWindow):
         self.ui.centralwidget.setLayout(self.ui.mainLayout)
         self.ui.buttonBox.setLayout(self.ui.buttonBoxLayout)
 
+        if not isfile('config.yaml'):
+            self.generate_new_configuration()
+        else:
+            self.config = yaml.load(file('config.yaml', 'r'))
+
         #Список отображаемых колонок и их заголовков
         self.displayed_person_columns = (
          [{'name':'id','title':u'№ договора'},
@@ -126,65 +135,108 @@ class Application(QtGui.QMainWindow):
         
         self.recordDialog = recordDialog(self)
         self.filterDialog = filterDialog(self)
+        self.catalogsDialog = catalogsDialog(self)
         
         self.databaseOpenSignal.connect(self.recordDialog.database_opened_slot)
         self.databaseOpenSignal.connect(self.recordDialog.arriveDialog.database_opened_slot)
         self.databaseOpenSignal.connect(self.filterDialog.database_opened_slot)
-        #self.connect(self.filterDialog.ui.resetButton, SIGNAL('clicked()'), self.fill_person_table)
+        self.databaseOpenSignal.connect(self.catalogsDialog.database_opened_slot)
         
         self.recordDialog.tableUpdated.connect(self.update_table_slot)
         self.filterDialog.tableFiltered.connect(self.fill_person_table)
         
-        self.connect(self.ui.mainTable,        SIGNAL('cellDoubleClicked(int, int)'), self.open_record_slot)
-        self.connect(self.ui.createBaseAction, SIGNAL('triggered()'),                 self.create_base_slot)
-        self.connect(self.ui.openBaseAction,   SIGNAL('triggered()'),                 self.open_base_slot)
-        self.connect(self.ui.openButton,       SIGNAL('clicked()'),                   self.open_record_slot)
-        self.connect(self.ui.addButton,        SIGNAL('clicked()'),                   self.recordDialog.open_empty_record)
-        self.connect(self.ui.deleteButton,     SIGNAL('clicked()'),                   self.delete_record_slot)
-        self.connect(self.ui.filterButton,     SIGNAL('clicked()'),                   self.open_filter_slot)
+        self.catalogsDialog.addictionsChanged.connect(self.recordDialog.fill_addiction_list)
+        self.catalogsDialog.addictionsChanged.connect(self.filterDialog.fill_addiction_list)
+        self.catalogsDialog.addressesChanged.connect(self.recordDialog.arriveDialog.fill_send_address_list)
+        
+        self.connect(self.ui.refreshButton,       SIGNAL('clicked()'),                    self.fill_person_table)
+        self.connect(self.ui.mainTable,            SIGNAL('cellDoubleClicked(int, int)'), self.open_record_slot)
+        self.connect(self.ui.createBaseAction,     SIGNAL('triggered()'),                 self.create_base_slot)
+        self.connect(self.ui.openBaseAction,       SIGNAL('triggered()'),                 self.open_base_slot)
+        self.connect(self.ui.imagesPathEditAction, SIGNAL('triggered()'),                 self.edit_images_path)
+        self.connect(self.ui.catalogEditAction,    SIGNAL('triggered()'),                 self.catalogsDialog.show)
+        self.connect(self.ui.openButton,           SIGNAL('clicked()'),                   self.open_record_slot)
+        self.connect(self.ui.addButton,            SIGNAL('clicked()'),                   self.recordDialog.open_empty_record)
+        self.connect(self.ui.deleteButton,         SIGNAL('clicked()'),                   self.delete_record_slot)
+        self.connect(self.ui.filterButton,         SIGNAL('clicked()'),                   self.open_filter_slot)
 
-        #-------------Временное----------------
-        self.enable_buttons()
-        self.db = Model({'database_path':'small_test_database.db'})
-        self.databaseOpenSignal.emit(self.db)
-        self.fill_person_table()
-        #--------------------------------------
+        if self.config['paths'].has_key('database') and isfile(self.config['paths']['database']):
+            self.open_base(self.config['paths']['database'])
    
+    def generate_new_configuration(self):
+        img_path = join(getcwdu(),'images')
+        self.config = {'paths': {'images': img_path}}
+
+        self.update_configuration()
+        
+    def update_configuration(self):
+        f = file('config.yaml', 'w')
+        
+        if not isfile('config.yaml'):
+            f.write('')
+        
+        yaml.dump(self.config, f)
+        
+        f.close()
+     
+    def edit_images_path(self):        
+        path = unicode(QtGui.QFileDialog.getExistingDirectory(self, u"Изменить директорию фотографий", self.config['paths']['images']))
+
+        if path != '':
+            self.config['paths']['images'] = path
+            self.update_configuration()
+        
     def execute(self):
         """Исполнение приложения"""
         self.show()
         sys.exit(self.app.exec_())
    
+    def close_database(self):
+        self.db.close_connection()
+        self.ui.mainTable.clear()
+        self.ui.mainTable.setRowCount(0)
+        self.ui.mainTable.setColumnCount(0)
+        self.ui.catalogEditAction.setEnabled(False)
+    
+    def open_base(self, path):
+        if hasattr(self, 'db'):
+            self.close_database()
+            
+        try:
+            self.db = Model({'database_path':path})
+        except IOError:
+            sys.exit(IOError.message)
+            
+        self.databaseOpenSignal.emit(self.db)
+        
+        self.enable_buttons()
+        self.fill_person_table()
+       
     def open_base_slot(self):
         """Реакция на нажание 'Открыть базу' в главном меню"""
-        path = str(QtGui.QFileDialog.getOpenFileName(self, u"Открыть базу", u"", u"Базы данных (*.db)"))
+        path = unicode(QtGui.QFileDialog.getOpenFileName(self, u"Открыть базу", unicode(getcwdu()), u"Базы данных (*.db)"))
 
         if path != '':
-            if hasattr(self, 'db'):
-                self.db.close_connection()
+            self.open_base(path)
             
-            try:
-                self.db = Model({'database_path':path})
-            except IOError:
-                sys.exit(IOError)
-                
-            self.databaseOpenSignal.emit(self.db)
-            
-            self.enable_buttons()
-            self.fill_person_table()
+            self.config['paths']['database'] = path
+            self.update_configuration()
    
     def create_base_slot(self):
         """Реакция на нажание 'Создать пустую базу' в главном меню"""
-        path = str(QtGui.QFileDialog.getSaveFileName(self, u"Создать новую базу", u"", u"Базы данных (*.db)"))
+        path = unicode(QtGui.QFileDialog.getSaveFileName(self, u"Создать новую базу", unicode(getcwdu()), u"Базы данных (*.db)"))
 
         if path != '':
             if hasattr(self, 'db'):
-                self.db.close_connection()
-            
+                self.close_database()
+                
             try:    
                 self.db = Model({'database_path':path})
             except IOError:
-                sys.exit(IOError)
+                sys.exit(IOError.message)
+            
+            self.config['paths']['database'] = path
+            self.update_configuration()
                 
             self.db.create_empty_tables()
             
@@ -322,10 +374,12 @@ class Application(QtGui.QMainWindow):
         self.filterDialog.show()
 
     def enable_buttons(self):
+        self.ui.refreshButton.setEnabled(True)
         self.ui.addButton.setEnabled(True)
         self.ui.deleteButton.setEnabled(True)
         self.ui.openButton.setEnabled(True)
         self.ui.filterButton.setEnabled(True)
+        self.ui.catalogEditAction.setEnabled(True)
         
                 
 class recordDialog(QtGui.QDialog):
@@ -334,6 +388,8 @@ class recordDialog(QtGui.QDialog):
         QtGui.QWidget.__init__(self, parent)
         self.ui = record_form.Ui_Dialog()
         self.ui.setupUi(self)
+        
+        self.config = self.parent().config
         
         self.displayed_arrive_columns = (
         [{'name': 'arrive_date', 'title': u'Прибыл'},
@@ -561,8 +617,11 @@ class recordDialog(QtGui.QDialog):
             item.record = record
                 
     def fill_arrive_foto(self, foto):
-        scene = QtGui.QGraphicsScene()           
-        pixmap = (QtGui.QPixmap("images/%s" % foto).
+        scene = QtGui.QGraphicsScene()   
+        
+        fotopath = join(self.config['paths']['images'], foto)
+        
+        pixmap = (QtGui.QPixmap(fotopath).
                   scaledToHeight(self.ui.fotoArea.height()/1.12, 1).
                   scaledToWidth(self.ui.fotoArea.width()/1.2, 1))
         scene.addPixmap(pixmap)
@@ -681,13 +740,14 @@ class arriveDialog(QtGui.QDialog):
         self.ui = arrive_form.Ui_Dialog()
         self.ui.setupUi(self)
         
+        self.config = self.parent().config
         
         self.connect(self.ui.makeFoto, SIGNAL('clicked()'), self.make_foto_slot)
         self.connect(self.ui.openFoto, SIGNAL('clicked()'), self.open_foto_slot)
         self.connect(self.ui.saveButton, SIGNAL('clicked()'), self.save_record_slot)
         self.connect(self.ui.deleteButton, SIGNAL('clicked()'), self.delete_record_slot)
         self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close_slot)
-        self.connect(self.ui.leave_cause_id, SIGNAL('currentIndexChanged(int)'), self.leave_cause_changed_slot)
+        self.connect(self.ui.leave_cause_id, SIGNAL('activated(int)'), self.leave_cause_changed_slot)
 
     def database_opened_slot(self, database):
         self.close()
@@ -696,7 +756,6 @@ class arriveDialog(QtGui.QDialog):
         self.fill_send_address_list()
         
     def fill_cause_list(self):
-        
         leave_cause_list_widget = self.ui.leave_cause_id
         leave_cause_list_widget.clear()
         
@@ -706,6 +765,7 @@ class arriveDialog(QtGui.QDialog):
             leave_cause_list_widget.addItem(cause_list[i].cause, [cause_list[i].id, cause_list[i].with_address])
             
         leave_cause_list_widget.setCurrentIndex(0)
+        
         if not cause_list[0].with_address:
             self.ui.send_address_id.setVisible(False)
             self.ui.send_address_id_label.setVisible(False)
@@ -731,7 +791,7 @@ class arriveDialog(QtGui.QDialog):
                 
                 if column_name == 'leave_cause_id':
                     field.setCurrentIndex(0)
-                    with_address = field.itemData(0).toList()[1]
+                    with_address = field.itemData(0).toList()[1].toBool()
 
                     if with_address:
                         self.ui.send_address_id.setVisible(True)
@@ -792,6 +852,18 @@ class arriveDialog(QtGui.QDialog):
         self.state = 'create_record'
         self.show()
     
+    def get_images_directory(self):
+        img_dir =  self.config['paths']['images']
+        
+        if not isdir(img_dir):
+            mkdir(img_dir)
+        
+        return img_dir 
+    
+    def generate_image_filename(self):
+        return unicode(QDate().currentDate().toString('dd-MM-yyyy') + '_' +
+                       QTime().currentTime().toString('HH-mm-ss-zz') + '.png')
+    
     def make_foto_slot(self):
         confirmation = True
         
@@ -806,34 +878,39 @@ class arriveDialog(QtGui.QDialog):
         
         if confirmation:
             camera = VideoCapture.Device()
-            fotoname = unicode(QDate().currentDate().toString('dd.MM.yyyy') + '_' +
-                               QTime().currentTime().toString('HH-mm-ss-zz') + '.png')
+            fotoname = self.generate_image_filename()
+            img_dir = self.get_images_directory()
+            
             try:
-                camera.saveSnapshot('images/%s' %  fotoname, timestamp=True)
+                
+                camera.saveSnapshot(join(img_dir, fotoname), timestamp=True)
             except IOError:
                 sys.exit(IOError)
             
             if self.record.foto != None:
-                remove('images/%s' % self.record.foto)
+                remove(join(img_dir, self.record.foto))
                 
             self.record.foto = fotoname
             
         self.fill_arrive_foto(fotoname)
    
     def open_foto_slot(self):
-        path = str(QtGui.QFileDialog.getOpenFileName(self, u"Открыть фото", u""))
+        path = unicode(QtGui.QFileDialog.getOpenFileName(self, u"Открыть фото", unicode(getcwdu())))
     
         if path != '':
-            fotoname = unicode(QDate().currentDate().toString('dd.MM.yyyy') + '_' +
-                               QTime().currentTime().toString('HH-mm-ss-zz') + '.png')
-     
-        try:                  
-            copyfile(path, 'images/%s' % fotoname)
-        except IOError:
-            sys.exit(IOError)
+            fotoname = self.generate_image_filename()
+            img_dir = self.get_images_directory()
+            fotopath = join(img_dir, fotoname)
+            
+        try:
+            src_image = Image.open(path, 'r')
+            src_image.save(fotopath, 'PNG')
+            
+        except Exception:
+            sys.exit(Exception.message)
         
         if self.record.foto != None:
-            remove('images/%s' % fotoname)
+            remove(img_dir, self.record.foto)
             
         self.record.foto = fotoname
      
@@ -888,7 +965,10 @@ class arriveDialog(QtGui.QDialog):
      
     def fill_arrive_foto(self, foto):
         scene = QtGui.QGraphicsScene()
-        scene.addPixmap(QtGui.QPixmap("images/%s" % foto))
+        
+        fotopath = join(self.config['paths']['images'], foto)
+        
+        scene.addPixmap(QtGui.QPixmap(fotopath))
         self.ui.fotoArea.setScene(scene)
  
     def delete_record_slot(self):
@@ -954,6 +1034,7 @@ class filterDialog(QtGui.QDialog):
                                                           'addiction_duration_to'),  'with_type_check':False},
                                    ])
         
+        self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close)
         self.connect(self.ui.filterButton, SIGNAL('clicked()'), self.filter_slot)
         self.connect(self.ui.resetButton, SIGNAL('clicked()'), self.reset_filter_slot)
         self.connect(self.ui.born_date_enabled, SIGNAL('stateChanged(int)'), self.switch_born_date)
@@ -1078,7 +1159,149 @@ class filterDialog(QtGui.QDialog):
         self.ui.born_date_label.setEnabled(state)
         self.ui.born_date_label_from.setEnabled(state)
         self.ui.born_date_label_to.setEnabled(state)
+    
+    
+class catalogsDialog(QtGui.QDialog):
+    addictionsChanged = pyqtSignal()
+    addressesChanged  = pyqtSignal()
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = catalogs_form.Ui_Dialog()
+        self.ui.setupUi(self)
         
+        self.mainLayout = QtGui.QVBoxLayout(self)
+        self.mainLayout.addWidget(self.ui.tabs)
+        
+        self.ui.addictionTab.setLayout(self.ui.addictionLayout)
+        self.ui.addressTab.setLayout(self.ui.addressLayout)
+        
+        self.connect(self.ui.addAddiction,    SIGNAL('clicked()'), self.add_addiction)
+        self.connect(self.ui.editAddiction,   SIGNAL('clicked()'), self.update_addiction)
+        self.connect(self.ui.deleteAddiction, SIGNAL('clicked()'), self.delete_addiction)
+        
+        self.connect(self.ui.addAddress,    SIGNAL('clicked()'), self.add_address)
+        self.connect(self.ui.editAddress,   SIGNAL('clicked()'), self.update_address)
+        self.connect(self.ui.deleteAddress, SIGNAL('clicked()'), self.delete_address)
+        
+        self.connect(self.ui.addictionTable, SIGNAL('cellDoubleClicked(int, int)'), self.update_addiction)
+        
+        
+    def database_opened_slot(self, database):
+        self.close()
+        self.db = database
+        self.fill_addiction_table()
+        self.fill_send_address_table()
+    
+    def fill_addiction_table(self):
+        addiction_list = self.db.get_addictions()
+        
+        table = self.ui.addictionTable
+        table.clear()
+        table.setRowCount(len(addiction_list))
+        
+        for i in range(0, len(addiction_list)):
+            item = QtGui.QTableWidgetItem(addiction_list[i].name)
+            table.setItem(i, 0, item)
+            
+            item.record = addiction_list[i]
+    
+    def fill_send_address_table(self):
+        address_list = self.db.get_send_addresses()
+        
+        table = self.ui.addressTable
+        table.clear()
+        table.setRowCount(len(address_list))
+        
+        for i in range(0, len(address_list)):
+            item = QtGui.QTableWidgetItem(address_list[i].address)
+            table.setItem(i, 0, item)
+            
+            item.record = address_list[i]
+
+    def add_addiction(self):
+        new_addiction_name, confirm = QtGui.QInputDialog.getText(self, u'Добавление вида зависимости', 
+                                                                       u'Введите название нового вида зависимости:')
+
+        if confirm:
+            addiction = Addiction(unicode(new_addiction_name))
+            self.db.insert_record(addiction)
+            
+            self.fill_addiction_table()
+            self.addictionsChanged.emit()
+    
+    def update_addiction(self):
+        current_index = self.ui.addictionTable.currentRow()
+        
+        if current_index != -1:
+            table_item = self.ui.addictionTable.item(current_index, 0)
+            record = table_item.record
+            
+            new_addiction_name, confirm = QtGui.QInputDialog.getText(self, u'Изменение вида зависимости', 
+                                                                           u'Введите новое название вида зависимости:', text=record.name)
+    
+            if confirm:
+                record.name = unicode(new_addiction_name)
+                self.db.update_records()
+                table_item.setText(new_addiction_name)
+                
+                self.addictionsChanged.emit()
+    
+    def delete_addiction(self):
+        current_index = self.ui.addictionTable.currentRow()
+        if current_index != -1:
+            confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
+                u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
+                QtGui.QMessageBox.Ok | 
+                QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+    
+            if confirm == QtGui.QMessageBox.Ok:
+                    record = self.ui.addictionTable.item(current_index, 0).record
+                    self.db.delete_record(record)
+                    self.ui.addictionTable.removeRow(current_index)
+                    self.addictionsChanged.emit()
+    
+    def add_address(self):
+        new_address_name, confirm = QtGui.QInputDialog.getText(self, u'Добавление адреса', 
+                                                                     u'Введите новый адрес:')
+
+        if confirm:
+            addiction = SendAddress(unicode(new_address_name))
+            self.db.insert_record(addiction)
+            
+            self.fill_send_address_table()
+            self.addressesChanged.emit()
+    
+    def update_address(self):
+        current_index = self.ui.addressTable.currentRow()
+        
+        if current_index != -1:
+            table_item = self.ui.addressTable.item(current_index, 0)
+            record = table_item.record
+            
+            new_address_name, confirm = QtGui.QInputDialog.getText(self, u'Изменение адреса', 
+                                                                           u'Введите новый адрес:', text=record.address)
+    
+            if confirm:
+                record.address = unicode(new_address_name)
+                self.db.update_records()
+                table_item.setText(new_address_name)
+                
+                self.addressChanged.emit()
+    
+    def delete_address(self):
+        current_index = self.ui.addressTable.currentRow()
+        if current_index != -1:
+            confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
+                u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
+                QtGui.QMessageBox.Ok | 
+                QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+    
+            if confirm == QtGui.QMessageBox.Ok:
+                    record = self.ui.addressTable.item(current_index, 0).record
+                    self.db.delete_record(record)
+                    self.ui.addressTable.removeRow(current_index)
+                    self.addressesChanged.emit()
+
 if __name__ == '__main__':    
     app = Application()
     app.execute()

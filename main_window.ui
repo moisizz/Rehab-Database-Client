@@ -94,6 +94,28 @@
           </property>
           <layout class="QHBoxLayout" name="buttonBoxLayout">
            <item>
+            <widget class="QPushButton" name="refreshButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Обновить</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="openButton">
              <property name="enabled">
               <bool>false</bool>
@@ -208,7 +230,15 @@
     <addaction name="separator"/>
     <addaction name="exitAction"/>
    </widget>
+   <widget class="QMenu" name="editMeny">
+    <property name="title">
+     <string>Правка</string>
+    </property>
+    <addaction name="imagesPathEditAction"/>
+    <addaction name="catalogEditAction"/>
+   </widget>
    <addaction name="menu"/>
+   <addaction name="editMeny"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="openBaseAction">
@@ -224,6 +254,19 @@
   <action name="createBaseAction">
    <property name="text">
     <string>Создать пустую базу...</string>
+   </property>
+  </action>
+  <action name="imagesPathEditAction">
+   <property name="text">
+    <string>Изменить директоррию фотографий...</string>
+   </property>
+  </action>
+  <action name="catalogEditAction">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Изменить справочники...</string>
    </property>
   </action>
  </widget>
