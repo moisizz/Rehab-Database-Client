@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Фильтр базы</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/filter</normaloff>:/icons/filter</iconset>
+  </property>
   <widget class="QDateEdit" name="born_date_from">
    <property name="enabled">
     <bool>false</bool>
@@ -216,34 +220,42 @@
     <rect>
      <x>10</x>
      <y>370</y>
-     <width>75</width>
-     <height>23</height>
+     <width>90</width>
+     <height>30</height>
     </rect>
    </property>
    <property name="text">
     <string>Фильтр</string>
    </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/filter</normaloff>:/icons/filter</iconset>
+   </property>
   </widget>
   <widget class="QPushButton" name="resetButton">
    <property name="geometry">
     <rect>
-     <x>90</x>
+     <x>110</x>
      <y>370</y>
-     <width>75</width>
-     <height>23</height>
+     <width>90</width>
+     <height>30</height>
     </rect>
    </property>
    <property name="text">
     <string>Сбросить</string>
    </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/refresh</normaloff>:/icons/refresh</iconset>
+   </property>
   </widget>
   <widget class="QPushButton" name="closeButton">
    <property name="geometry">
     <rect>
-     <x>170</x>
+     <x>210</x>
      <y>370</y>
-     <width>75</width>
-     <height>23</height>
+     <width>90</width>
+     <height>30</height>
     </rect>
    </property>
    <property name="text">
@@ -422,77 +434,6 @@
     </rect>
    </property>
   </widget>
-  <widget class="QGroupBox" name="groupBox">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>70</y>
-     <width>234</width>
-     <height>47</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Паспорт</string>
-   </property>
-   <widget class="QLabel" name="label_12">
-    <property name="geometry">
-     <rect>
-      <x>116</x>
-      <y>20</y>
-      <width>46</width>
-      <height>13</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Номер</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="passport_series">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>17</y>
-      <width>51</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="inputMask">
-     <string>####; </string>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="passport_number">
-    <property name="geometry">
-     <rect>
-      <x>151</x>
-      <y>17</y>
-      <width>71</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="inputMask">
-     <string>######; </string>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_5">
-    <property name="geometry">
-     <rect>
-      <x>14</x>
-      <y>20</y>
-      <width>40</width>
-      <height>13</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Серия</string>
-    </property>
-   </widget>
-  </widget>
   <widget class="QCheckBox" name="born_date_enabled">
    <property name="geometry">
     <rect>
@@ -586,6 +527,35 @@
     <string>До</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>161</x>
+     <y>73</y>
+     <width>105</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Паспорт (Серия, №)</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="passport">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>90</y>
+     <width>160</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="inputMask">
+    <string/>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
  </widget>
  <tabstops>
   <tabstop>last_name</tabstop>
@@ -607,6 +577,8 @@
   <tabstop>resetButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

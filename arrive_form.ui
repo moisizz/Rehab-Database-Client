@@ -19,6 +19,10 @@
   <property name="windowTitle">
    <string>Прибытие/убытие</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/arrive</normaloff>:/icons/arrive</iconset>
+  </property>
   <property name="modal">
    <bool>true</bool>
   </property>
@@ -100,6 +104,10 @@
         <property name="text">
          <string>Снять</string>
         </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/webcam</normaloff>:/icons/webcam</iconset>
+        </property>
        </widget>
        <widget class="QPushButton" name="openFoto">
         <property name="geometry">
@@ -126,7 +134,11 @@
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Открыть...</string>
+         <string>Открыть</string>
+        </property>
+        <property name="icon">
+         <iconset resource="icons.qrc">
+          <normaloff>:/icons/open_image</normaloff>:/icons/open_image</iconset>
         </property>
        </widget>
       </widget>
@@ -164,8 +176,8 @@
    <widget class="QCheckBox" name="is_cure">
     <property name="geometry">
      <rect>
-      <x>267</x>
-      <y>63</y>
+      <x>480</x>
+      <y>22</y>
       <width>80</width>
       <height>17</height>
      </rect>
@@ -177,9 +189,9 @@
    <widget class="QComboBox" name="send_address_id">
     <property name="geometry">
      <rect>
-      <x>447</x>
-      <y>31</y>
-      <width>140</width>
+      <x>280</x>
+      <y>50</y>
+      <width>171</width>
       <height>22</height>
      </rect>
     </property>
@@ -187,8 +199,8 @@
    <widget class="QDateEdit" name="arrive_date">
     <property name="geometry">
      <rect>
-      <x>13</x>
-      <y>31</y>
+      <x>57</x>
+      <y>20</y>
       <width>110</width>
       <height>22</height>
      </rect>
@@ -200,8 +212,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>137</x>
-      <y>11</y>
+      <x>20</x>
+      <y>53</y>
       <width>31</width>
       <height>16</height>
      </rect>
@@ -213,8 +225,8 @@
    <widget class="QComboBox" name="leave_cause_id">
     <property name="geometry">
      <rect>
-      <x>267</x>
-      <y>31</y>
+      <x>280</x>
+      <y>20</y>
       <width>170</width>
       <height>22</height>
      </rect>
@@ -223,8 +235,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>17</x>
-      <y>11</y>
+      <x>10</x>
+      <y>22</y>
       <width>46</width>
       <height>13</height>
      </rect>
@@ -236,8 +248,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>267</x>
-      <y>13</y>
+      <x>228</x>
+      <y>22</y>
       <width>46</width>
       <height>13</height>
      </rect>
@@ -249,8 +261,8 @@
    <widget class="QDateEdit" name="leave_date">
     <property name="geometry">
      <rect>
-      <x>137</x>
-      <y>31</y>
+      <x>57</x>
+      <y>50</y>
       <width>110</width>
       <height>22</height>
      </rect>
@@ -262,8 +274,8 @@
    <widget class="QLabel" name="send_address_id_label">
     <property name="geometry">
      <rect>
-      <x>447</x>
-      <y>13</y>
+      <x>190</x>
+      <y>53</y>
       <width>90</width>
       <height>13</height>
      </rect>
@@ -276,9 +288,9 @@
   <widget class="QGroupBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>13</x>
      <y>510</y>
-     <width>324</width>
+     <width>340</width>
      <height>42</height>
     </rect>
    </property>
@@ -300,7 +312,7 @@
    <widget class="QPushButton" name="closeButton">
     <property name="geometry">
      <rect>
-      <x>218</x>
+      <x>230</x>
       <y>6</y>
       <width>100</width>
       <height>30</height>
@@ -331,7 +343,7 @@
    <widget class="QPushButton" name="deleteButton">
     <property name="geometry">
      <rect>
-      <x>112</x>
+      <x>120</x>
       <y>6</y>
       <width>100</width>
       <height>30</height>
@@ -358,11 +370,15 @@
     <property name="text">
      <string>Удалить</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/delete_arrive</normaloff>:/icons/delete_arrive</iconset>
+    </property>
    </widget>
    <widget class="QPushButton" name="saveButton">
     <property name="geometry">
      <rect>
-      <x>6</x>
+      <x>7</x>
       <y>6</y>
       <width>100</width>
       <height>30</height>
@@ -389,15 +405,15 @@
     <property name="text">
      <string>Сохранить</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/add_arrive</normaloff>:/icons/add_arrive</iconset>
+    </property>
    </widget>
-   <zorder>closeButton</zorder>
-   <zorder>deleteButton</zorder>
-   <zorder>saveButton</zorder>
-   <zorder>closeButton</zorder>
-   <zorder>deleteButton</zorder>
-   <zorder>saveButton</zorder>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

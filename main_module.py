@@ -8,6 +8,7 @@ from model import Model, Person, Arrive, Addiction, SendAddress
 from sqlalchemy.orm.query import Query
 from PIL import Image
 import yaml
+from datetime import datetime
 
 from PyQt4 import QtGui
 from PyQt4.QtCore import SIGNAL, QDate, QTime, pyqtSignal, Qt
@@ -37,7 +38,10 @@ def set_field_value(field, value):
     field_type = field.__class__.__name__
     
     if field_type == 'QLineEdit':
-        field.setText(unicode(value))
+        if value != None:
+            field.setText(unicode(value))
+        else:
+            field.setText('')
         
     elif field_type == 'QGroupBox':
         for choise in field.children():
@@ -47,7 +51,10 @@ def set_field_value(field, value):
                 choise.setChecked(True)
                 
     elif field_type == 'QDateEdit':
-        field.setDate(QDate(value))
+        if value != None:
+            field.setDate(QDate(value))
+        else:
+            field.setDate(QDate().currentDate())
     
     elif field_type == 'QComboBox':
         if field.objectName() == 'leave_cause_id':
@@ -65,7 +72,10 @@ def set_field_value(field, value):
         field.setChecked(bool(value))  
         
     elif field_type == 'QPlainTextEdit':
-        field.setPlainText(unicode(value))
+        if value != None:
+            field.setPlainText(unicode(value))
+        else:
+            field.setPlainText('')
 
 def get_field_value(field):
     field_type = field.__class__.__name__
@@ -116,7 +126,7 @@ class Application(QtGui.QMainWindow):
 
         #Список отображаемых колонок и их заголовков
         self.displayed_person_columns = (
-         [{'name':'id','title':u'№ договора'},
+         [{'name':'contract_number','title':u'№ договора'},
           {'name':'contract_date','title':u'Дата договора'},
           {'name':'last_name','title':u'Фамилия'},
           {'name':'first_name','title':u'Имя'},
@@ -124,8 +134,7 @@ class Application(QtGui.QMainWindow):
           {'name':'gender','title':u'Пол'},
           {'name':'born_date','title':u'Дата рождения'},
           {'name':'born_place','title':u'Место рождения'},
-          {'name':'passport_series','title':u'Серия паспорта'},
-          {'name':'passport_number','title':u'№ Паспорта'},
+          {'name':'passport','title':u'Серия, № паспорта'},
           {'name':'passport_given','title':u'Паспорт выдан'},
           {'name':'address','title':u'Адрес прописки'},
           {'name':'contact_phone','title':u'Контакт. телефон'},
@@ -326,8 +335,10 @@ class Application(QtGui.QMainWindow):
         #Задаем количество колонок таблицы
         table = self.ui.mainTable
         table.clear()
+        table.clearContents()
+        
         table.setColumnCount(len(columns))
-
+        
         #Создаем шапку таблицы        
         for i in range(0, len(columns)):
             col_title = columns[i]['title']
@@ -337,7 +348,7 @@ class Application(QtGui.QMainWindow):
 
         #Задаем число строк
         table.setRowCount(len(person_list))
-        table.records =[]
+        #table.records =[]
         
         #Заполняем таблицу
         for i in range(0, len(person_list)):
@@ -345,8 +356,8 @@ class Application(QtGui.QMainWindow):
                 self.fill_cell(i, j, columns[j]['name'], person_list[i])
               
     def fill_cell(self, row, col, column_name, record):
-
         #Если колонка пола
+        
         if(column_name == 'gender'):
             if(getattr(record, column_name) == Person.male):
                 value = u'Муж.'
@@ -357,17 +368,34 @@ class Application(QtGui.QMainWindow):
             value = record.addiction.name
             
         elif (column_name == 'addiction_start_date'):
-            start_date = QDate(getattr(record, column_name)).year()
-            current_date = QDate().currentDate().year()
+            addiction_start_date = getattr(record, column_name)
             
-            dlit = current_date - start_date
-            value = unicode(dlit)
+            if addiction_start_date == None:
+                addiction_start_date = QDate().currentDate().year()
+                
+            if record.contract_date != None:
+                current_date = QDate(record.contract_date).year()
+            else:
+                current_date = QDate().currentDate().year()
+            
+            start_date = QDate(addiction_start_date).year()
+            
+            if current_date >= start_date:
+                dlit = current_date - start_date
+                value = unicode(dlit)
+            else:
+                value = unicode(0)
             
         elif (column_name == 'contract_date') or (column_name == 'born_date'):
-            value = QDate(getattr(record, column_name)).toString('dd.MM.yyyy')
+            if getattr(record, column_name) != None:
+                value = QDate(getattr(record, column_name)).toString('dd.MM.yyyy')
+            else:
+                value = u''
             
         else:
-            value = unicode(getattr(record, column_name))
+            value = getattr(record, column_name)
+            if value == None:
+                value = u''
         
         item = QtGui.QTableWidgetItem(value)
         
@@ -401,15 +429,13 @@ class recordDialog(QtGui.QDialog):
         self.ui.mainLayout = QtGui.QHBoxLayout(self)
         
         self.ui.rightSideLayout = QtGui.QVBoxLayout()
-        self.ui.rightSideLayout.addWidget(self.ui.fotoLabel)
-        self.ui.rightSideLayout.addWidget(self.ui.fotoArea)
         self.ui.rightSideLayout.addWidget(self.ui.arriveTable)
         self.ui.rightSideLayout.addWidget(self.ui.arriveButtonBar) 
+        self.ui.rightSideLayout.addWidget(self.ui.fotoArea)
+        self.ui.rightSideLayout.addWidget(self.ui.fotoLabel)
         
         self.ui.mainLayout.addWidget(self.ui.mainBox)
         self.ui.mainLayout.addLayout(self.ui.rightSideLayout)
-        
-        
         
         self.config = self.parent().config
         
@@ -488,6 +514,10 @@ class recordDialog(QtGui.QDialog):
         self.clear_fields()
         self.ui.saveButton.setText(u'Сохранить')
  
+        save_icon = QtGui.QIcon()
+        save_icon.addPixmap(QtGui.QPixmap(u":/icons/update"), QtGui.QIcon.Normal, QtGui.QIcon.Off)        
+        self.ui.saveButton.setIcon(save_icon)
+ 
         self.enable_empty_part()
         
         columns = record.get_columns_names()
@@ -508,6 +538,11 @@ class recordDialog(QtGui.QDialog):
         self.record = Person({})
         self.clear_fields()
         self.ui.saveButton.setText(u'Добавить')
+        
+        add_icon = QtGui.QIcon()
+        add_icon.addPixmap(QtGui.QPixmap(u":/icons/add_person"), QtGui.QIcon.Normal, QtGui.QIcon.Off)        
+        self.ui.saveButton.setIcon(add_icon)
+        
         self.disable_empty_part()
         
         self.state = 'create_record'
@@ -628,7 +663,10 @@ class recordDialog(QtGui.QDialog):
             else:
                 value = column_value.address
         elif (column_name == 'arrive_date') or (column_name == 'leave_date'):
-            value = QDate(column_value).toString('dd.MM.yyyy')
+            if column_value != None:
+                value = QDate(column_value).toString('dd.MM.yyyy')
+            else:
+                value = ''
         else:
             value = unicode(column_value)
             
@@ -716,10 +754,11 @@ class recordDialog(QtGui.QDialog):
             row = self.ui.arriveTable.currentRow()
             col = self.ui.arriveTable.currentColumn()
         
-        table_item = self.ui.arriveTable.item(row, 0)
-        record = table_item.record
+        if row != -1:
+            table_item = self.ui.arriveTable.item(row, 0)
+            record = table_item.record
         
-        self.arriveDialog.open_arrive_record(record)
+            self.arriveDialog.open_arrive_record(record)
         
     def open_empty_arrive_slot(self):
         self.arriveDialog.db = self.db
@@ -856,6 +895,12 @@ class arriveDialog(QtGui.QDialog):
     
     def open_arrive_record(self, record):
         self.record = record
+        
+        self.ui.saveButton.setText(u'Сохранить')
+        save_icon = QtGui.QIcon()
+        save_icon.addPixmap(QtGui.QPixmap(u":/icons/update"), QtGui.QIcon.Normal, QtGui.QIcon.Off)        
+        self.ui.saveButton.setIcon(save_icon)
+        
         self.clear_fields()
         
         columns = record.get_columns_names()
@@ -884,6 +929,11 @@ class arriveDialog(QtGui.QDialog):
         self.clear_fields()
         self.ui.deleteButton.setEnabled(False)
         self.ui.saveButton.setText(u'Добавить')
+        
+        add_icon = QtGui.QIcon()
+        add_icon.addPixmap(QtGui.QPixmap(u":/icons/add_arrive"), QtGui.QIcon.Normal, QtGui.QIcon.Off)        
+        self.ui.saveButton.setIcon(add_icon)
+        
         self.state = 'create_record'
         self.show()
     
@@ -945,7 +995,7 @@ class arriveDialog(QtGui.QDialog):
                 sys.exit(Exception.message)
             
             if self.record.foto != None:
-                remove(img_dir, self.record.foto)
+                remove(join(img_dir,self.record.foto))
                 
             self.record.foto = fotoname
          
@@ -1000,11 +1050,11 @@ class arriveDialog(QtGui.QDialog):
      
     def fill_arrive_foto(self, foto):
         scene = QtGui.QGraphicsScene()
-        
-        fotopath = join(self.config['paths']['images'], foto)
-        
-        scene.addPixmap(QtGui.QPixmap(fotopath))
-        self.ui.fotoArea.setScene(scene)
+        if foto != None:
+            fotopath = join(self.config['paths']['images'], foto)
+            
+            scene.addPixmap(QtGui.QPixmap(fotopath))
+            self.ui.fotoArea.setScene(scene)
  
     def delete_record_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
@@ -1029,7 +1079,7 @@ class arriveDialog(QtGui.QDialog):
         if confirm == QtGui.QMessageBox.Ok:
             if self.state == 'create_record' and self.record.foto != None:
                 tmp_fotoname = self.record.foto
-                remove('images/%s' % tmp_fotoname)
+                remove(join(self.config['paths']['images'], tmp_fotoname))
             
             self.hide()
     
@@ -1063,8 +1113,7 @@ class filterDialog(QtGui.QDialog):
             {'name':'first_name',           'field_name':'first_name',              'with_type_check':True},
             {'name':'middle_name',          'field_name':'middle_name',             'with_type_check':True},
             {'name':'gender',               'field_name':'gender',                  'with_type_check':False},
-            {'name':'passport_series',      'field_name':'passport_series',         'with_type_check':False},
-            {'name':'passport_number',      'field_name':'passport_number',         'with_type_check':False},
+            {'name':'passport',             'field_name':'passport',                'with_type_check':False},
             {'name':'born_place',           'field_name':'born_place',              'with_type_check':True},
             {'name':'born_date',            'field_name':('born_date_from', 
                                                           'born_date_to'),          'with_type_check':False},
@@ -1160,7 +1209,7 @@ class filterDialog(QtGui.QDialog):
             else:
                 value = get_field_value(getattr(self.ui, field_name))
                 if value != '' and value != None and value != -1:
-                    if column['field_name'] == 'address_city':
+                    if column['field_name'] == 'address_city' or column['field_name'] == 'passport':
                         type = 'like'
                     elif column['with_type_check']:
                         type_field = getattr(self.ui, field_name+'_type')
@@ -1231,6 +1280,7 @@ class catalogsDialog(QtGui.QDialog):
         self.connect(self.ui.deleteAddress, SIGNAL('clicked()'), self.delete_address)
         
         self.connect(self.ui.addictionTable, SIGNAL('cellDoubleClicked(int, int)'), self.update_addiction)
+        self.connect(self.ui.addressTable, SIGNAL('cellDoubleClicked(int, int)'), self.update_address)
         
     def database_opened_slot(self, database):
         self.close()

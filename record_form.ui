@@ -7,11 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>864</width>
-    <height>535</height>
+    <height>537</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Редактирование записи</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/user</normaloff>:/icons/user</iconset>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -53,7 +57,7 @@
     <property name="geometry">
      <rect>
       <x>16</x>
-      <y>111</y>
+      <y>155</y>
       <width>440</width>
       <height>71</height>
      </rect>
@@ -66,33 +70,20 @@
       <rect>
        <x>10</x>
        <y>18</y>
-       <width>46</width>
+       <width>70</width>
        <height>13</height>
       </rect>
      </property>
      <property name="text">
-      <string>Серия</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_9">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>18</y>
-       <width>46</width>
-       <height>13</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Номер</string>
+      <string>Серия, номер</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="passport_given">
      <property name="geometry">
       <rect>
-       <x>140</x>
+       <x>151</x>
        <y>38</y>
-       <width>291</width>
+       <width>281</width>
        <height>20</height>
       </rect>
      </property>
@@ -100,7 +91,7 @@
     <widget class="QLabel" name="label_8">
      <property name="geometry">
       <rect>
-       <x>140</x>
+       <x>150</x>
        <y>20</y>
        <width>46</width>
        <height>13</height>
@@ -110,33 +101,17 @@
       <string>Выдан</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="passport_series">
+    <widget class="QLineEdit" name="passport">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>38</y>
-       <width>51</width>
+       <width>131</width>
        <height>20</height>
       </rect>
      </property>
      <property name="inputMask">
-      <string>####; </string>
-     </property>
-     <property name="text">
       <string/>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="passport_number">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>38</y>
-       <width>61</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="inputMask">
-      <string>######; </string>
      </property>
      <property name="text">
       <string/>
@@ -146,9 +121,9 @@
    <widget class="QLineEdit" name="last_name">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>21</y>
-      <width>140</width>
+      <x>25</x>
+      <y>70</y>
+      <width>131</width>
       <height>20</height>
      </rect>
     </property>
@@ -156,8 +131,8 @@
    <widget class="QLabel" name="label_11">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>251</y>
+      <x>30</x>
+      <y>282</y>
       <width>101</width>
       <height>16</height>
      </rect>
@@ -169,9 +144,9 @@
    <widget class="QPlainTextEdit" name="notes">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>401</y>
-      <width>430</width>
+      <x>32</x>
+      <y>420</y>
+      <width>411</width>
       <height>71</height>
      </rect>
     </property>
@@ -183,7 +158,7 @@
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>48</y>
+      <y>97</y>
       <width>87</width>
       <height>13</height>
      </rect>
@@ -196,8 +171,8 @@
     <property name="geometry">
      <rect>
       <x>317</x>
-      <y>68</y>
-      <width>140</width>
+      <y>117</y>
+      <width>131</width>
       <height>20</height>
      </rect>
     </property>
@@ -206,7 +181,7 @@
     <property name="geometry">
      <rect>
       <x>186</x>
-      <y>251</y>
+      <y>282</y>
       <width>78</width>
       <height>16</height>
      </rect>
@@ -219,7 +194,7 @@
     <property name="geometry">
      <rect>
       <x>165</x>
-      <y>21</y>
+      <y>70</y>
       <width>140</width>
       <height>20</height>
      </rect>
@@ -229,7 +204,7 @@
     <property name="geometry">
      <rect>
       <x>317</x>
-      <y>6</y>
+      <y>55</y>
       <width>51</width>
       <height>16</height>
      </rect>
@@ -241,9 +216,9 @@
    <widget class="QPushButton" name="closeButton">
     <property name="geometry">
      <rect>
-      <x>179</x>
-      <y>494</y>
-      <width>75</width>
+      <x>370</x>
+      <y>500</y>
+      <width>90</width>
       <height>23</height>
      </rect>
     </property>
@@ -255,8 +230,8 @@
     <property name="geometry">
      <rect>
       <x>186</x>
-      <y>271</y>
-      <width>171</width>
+      <y>302</y>
+      <width>261</width>
       <height>20</height>
      </rect>
     </property>
@@ -267,8 +242,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>190</x>
-      <y>48</y>
+      <x>170</x>
+      <y>97</y>
       <width>84</width>
       <height>16</height>
      </rect>
@@ -280,8 +255,8 @@
    <widget class="QPushButton" name="deleteButton">
     <property name="geometry">
      <rect>
-      <x>99</x>
-      <y>494</y>
+      <x>29</x>
+      <y>500</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -289,12 +264,16 @@
     <property name="text">
      <string>Удалить</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/delete_person</normaloff>:/icons/delete_person</iconset>
+    </property>
    </widget>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>191</y>
+      <x>30</x>
+      <y>235</y>
       <width>87</width>
       <height>13</height>
      </rect>
@@ -306,21 +285,25 @@
    <widget class="QPushButton" name="saveButton">
     <property name="geometry">
      <rect>
-      <x>19</x>
-      <y>494</y>
-      <width>75</width>
+      <x>270</x>
+      <y>500</y>
+      <width>90</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>Сохранить</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/add_person</normaloff>:/icons/add_person</iconset>
+    </property>
    </widget>
    <widget class="QLabel" name="label_15">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>384</y>
+      <x>33</x>
+      <y>403</y>
       <width>63</width>
       <height>16</height>
      </rect>
@@ -333,7 +316,7 @@
     <property name="geometry">
      <rect>
       <x>166</x>
-      <y>6</y>
+      <y>55</y>
       <width>20</width>
       <height>13</height>
      </rect>
@@ -346,8 +329,8 @@
     <property name="geometry">
      <rect>
       <x>316</x>
-      <y>21</y>
-      <width>140</width>
+      <y>70</y>
+      <width>131</width>
       <height>20</height>
      </rect>
     </property>
@@ -355,9 +338,9 @@
    <widget class="QGroupBox" name="gender">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>48</y>
-      <width>157</width>
+      <x>20</x>
+      <y>97</y>
+      <width>141</width>
       <height>47</height>
      </rect>
     </property>
@@ -373,27 +356,27 @@
     <widget class="QRadioButton" name="female">
      <property name="geometry">
       <rect>
-       <x>82</x>
-       <y>16</y>
-       <width>70</width>
+       <x>60</x>
+       <y>18</y>
+       <width>50</width>
        <height>17</height>
       </rect>
      </property>
      <property name="text">
-      <string>Женский</string>
+      <string>Жен</string>
      </property>
     </widget>
     <widget class="QRadioButton" name="male">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>15</y>
-       <width>70</width>
+       <y>17</y>
+       <width>50</width>
        <height>17</height>
       </rect>
      </property>
      <property name="text">
-      <string>Мужской</string>
+      <string>Муж</string>
      </property>
      <property name="checked">
       <bool>true</bool>
@@ -403,9 +386,9 @@
    <widget class="QDateEdit" name="born_date">
     <property name="geometry">
      <rect>
-      <x>187</x>
-      <y>68</y>
-      <width>110</width>
+      <x>170</x>
+      <y>117</y>
+      <width>134</width>
       <height>22</height>
      </rect>
     </property>
@@ -416,22 +399,22 @@
    <widget class="QLineEdit" name="contact_phone">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>271</y>
-      <width>161</width>
+      <x>32</x>
+      <y>302</y>
+      <width>141</width>
       <height>20</height>
      </rect>
     </property>
     <property name="inputMask">
-     <string>##########; </string>
+     <string/>
     </property>
    </widget>
    <widget class="QGroupBox" name="addiction_group">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>311</y>
-      <width>300</width>
+      <x>20</x>
+      <y>330</y>
+      <width>431</width>
       <height>61</height>
      </rect>
     </property>
@@ -441,7 +424,7 @@
     <widget class="QDateEdit" name="addiction_start_date">
      <property name="geometry">
       <rect>
-       <x>210</x>
+       <x>223</x>
        <y>22</y>
        <width>71</width>
        <height>22</height>
@@ -457,7 +440,7 @@
     <widget class="QLabel" name="label_10">
      <property name="geometry">
       <rect>
-       <x>157</x>
+       <x>170</x>
        <y>26</y>
        <width>50</width>
        <height>13</height>
@@ -494,8 +477,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>18</x>
-      <y>6</y>
+      <x>30</x>
+      <y>55</y>
       <width>46</width>
       <height>13</height>
      </rect>
@@ -507,19 +490,42 @@
    <widget class="QLineEdit" name="address">
     <property name="geometry">
      <rect>
-      <x>16</x>
-      <y>211</y>
-      <width>221</width>
+      <x>30</x>
+      <y>255</y>
+      <width>416</width>
       <height>20</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="contract_number">
+    <property name="geometry">
+     <rect>
+      <x>26</x>
+      <y>25</y>
+      <width>131</width>
+      <height>20</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>9</y>
+      <width>68</width>
+      <height>13</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>№ Договора</string>
     </property>
    </widget>
   </widget>
   <widget class="QTableWidget" name="arriveTable">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>246</y>
+     <x>488</x>
+     <y>4</y>
      <width>373</width>
      <height>219</height>
     </rect>
@@ -547,8 +553,8 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>471</y>
-     <width>270</width>
+     <y>228</y>
+     <width>280</width>
      <height>51</height>
     </rect>
    </property>
@@ -560,7 +566,7 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>270</width>
+     <width>280</width>
      <height>51</height>
     </size>
    </property>
@@ -576,8 +582,8 @@
    <widget class="QPushButton" name="arriveDeleteButton">
     <property name="geometry">
      <rect>
-      <x>187</x>
-      <y>20</y>
+      <x>188</x>
+      <y>18</y>
       <width>80</width>
       <height>23</height>
      </rect>
@@ -585,12 +591,16 @@
     <property name="text">
      <string>Удалить</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/delete_arrive</normaloff>:/icons/delete_arrive</iconset>
+    </property>
    </widget>
    <widget class="QPushButton" name="arriveAddButton">
     <property name="geometry">
      <rect>
-      <x>97</x>
-      <y>20</y>
+      <x>16</x>
+      <y>18</y>
       <width>80</width>
       <height>23</height>
      </rect>
@@ -598,12 +608,16 @@
     <property name="text">
      <string>Добавить</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/arrive</normaloff>:/icons/arrive</iconset>
+    </property>
    </widget>
    <widget class="QPushButton" name="arriveOpenButton">
     <property name="geometry">
      <rect>
-      <x>7</x>
-      <y>20</y>
+      <x>102</x>
+      <y>18</y>
       <width>80</width>
       <height>23</height>
      </rect>
@@ -611,15 +625,19 @@
     <property name="text">
      <string>Открыть</string>
     </property>
+    <property name="icon">
+     <iconset resource="icons.qrc">
+      <normaloff>:/icons/arrive_edit</normaloff>:/icons/arrive_edit</iconset>
+    </property>
    </widget>
   </widget>
   <widget class="QGraphicsView" name="fotoArea">
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>21</y>
+     <y>286</y>
      <width>373</width>
-     <height>219</height>
+     <height>230</height>
     </rect>
    </property>
    <property name="cursor" stdset="0">
@@ -633,26 +651,54 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>-1</y>
+     <y>517</y>
      <width>373</width>
      <height>16</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
+     <pointsize>8</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
     </font>
    </property>
    <property name="layoutDirection">
-    <enum>Qt::RightToLeft</enum>
+    <enum>Qt::LeftToRight</enum>
    </property>
    <property name="text">
     <string>Фотография</string>
    </property>
   </widget>
  </widget>
- <resources/>
+ <tabstops>
+  <tabstop>contract_number</tabstop>
+  <tabstop>last_name</tabstop>
+  <tabstop>first_name</tabstop>
+  <tabstop>middle_name</tabstop>
+  <tabstop>born_date</tabstop>
+  <tabstop>born_place</tabstop>
+  <tabstop>passport</tabstop>
+  <tabstop>passport_given</tabstop>
+  <tabstop>address</tabstop>
+  <tabstop>contact_phone</tabstop>
+  <tabstop>contact_person</tabstop>
+  <tabstop>addiction_id</tabstop>
+  <tabstop>addiction_start_date</tabstop>
+  <tabstop>notes</tabstop>
+  <tabstop>saveButton</tabstop>
+  <tabstop>closeButton</tabstop>
+  <tabstop>arriveAddButton</tabstop>
+  <tabstop>arriveOpenButton</tabstop>
+  <tabstop>deleteButton</tabstop>
+  <tabstop>arriveDeleteButton</tabstop>
+  <tabstop>female</tabstop>
+  <tabstop>fotoArea</tabstop>
+  <tabstop>arriveTable</tabstop>
+  <tabstop>male</tabstop>
+ </tabstops>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

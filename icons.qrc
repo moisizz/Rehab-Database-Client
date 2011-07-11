@@ -1,0 +1,19 @@
+<RCC>
+  <qresource prefix="icons">
+    <file alias="save">icons/save.png</file>
+    <file alias="arrive">icons/arrive.png</file>
+    <file alias="add_arrive">icons/add_arrive.png</file>
+    <file alias="user">icons/user.png</file>
+    <file alias="arrive_edit">icons/arrive_edit.png</file>
+    <file alias="webcam">icons/webcam.png</file>
+    <file alias="filter">icons/filter.png</file>
+    <file alias="update">icons/update.png</file>
+    <file alias="refresh">icons/refresh.png</file>
+    <file alias="add_person">icons/add_person.png</file>
+    <file alias="delete_arrive">icons/delete_arrive.png</file>
+    <file alias="delete_person">icons/delete_person.png</file>
+    <file alias="edit_person">icons/edit_person.png</file>
+    <file alias="open_image">icons/open_image.png</file>
+    <file alias="logo">icons/logo.png</file>
+  </qresource>
+</RCC>

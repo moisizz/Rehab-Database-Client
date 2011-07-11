@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Новый свет - База данных</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/icons/logo</normaloff>:/icons/logo</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
@@ -54,7 +58,7 @@
         <bool>true</bool>
        </property>
        <attribute name="verticalHeaderVisible">
-        <bool>false</bool>
+        <bool>true</bool>
        </attribute>
       </widget>
      </item>
@@ -94,28 +98,6 @@
           </property>
           <layout class="QHBoxLayout" name="buttonBoxLayout">
            <item>
-            <widget class="QPushButton" name="refreshButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>150</width>
-               <height>26</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Обновить</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QPushButton" name="openButton">
              <property name="enabled">
               <bool>false</bool>
@@ -134,6 +116,10 @@
              </property>
              <property name="text">
               <string>Открыть</string>
+             </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/icons/edit_person</normaloff>:/icons/edit_person</iconset>
              </property>
             </widget>
            </item>
@@ -157,6 +143,10 @@
              <property name="text">
               <string>Добавить</string>
              </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/icons/add_person</normaloff>:/icons/add_person</iconset>
+             </property>
             </widget>
            </item>
            <item>
@@ -179,6 +169,10 @@
              <property name="text">
               <string>Удалить</string>
              </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/icons/delete_person</normaloff>:/icons/delete_person</iconset>
+             </property>
             </widget>
            </item>
            <item>
@@ -200,6 +194,36 @@
              </property>
              <property name="text">
               <string>Фильтр</string>
+             </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/icons/filter</normaloff>:/icons/filter</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="refreshButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>26</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Сбросить</string>
+             </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/icons/refresh</normaloff>:/icons/refresh</iconset>
              </property>
             </widget>
            </item>
@@ -270,7 +294,9 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>exitAction</sender>

@@ -22,15 +22,15 @@ class Person(Base):
     female = 2
 
     id = Column(Integer, primary_key=True)
-    contract_date = Column(DateTime, nullable=False)
+    contract_number = Column(Unicode)
+    contract_date = Column(Date)
     last_name = Column(Unicode)
     first_name = Column(Unicode)
     middle_name = Column(Unicode)
     gender = Column(Integer)
     born_date = Column(Date())
     born_place = Column(Unicode)
-    passport_series = Column(SmallInteger)
-    passport_number = Column(Integer)
+    passport = Column(Unicode)
     passport_given = Column(Unicode)
     address = Column(Unicode)
     contact_phone = Column(Unicode)
@@ -39,11 +39,6 @@ class Person(Base):
     addiction_id = Column(Integer, ForeignKey('addiction.id', ondelete='RESTRICT'), nullable=True)
     notes = Column(UnicodeText)
 
-    __mapper_args__ = {
-    'version_id_col': contract_date,
-    'version_id_generator': lambda v:datetime.now()
-    }
-
     arrives = relation("Arrive", order_by="Arrive.arrive_date", uselist=True, cascade='all, delete-orphan')
     addiction = relation("Addiction", order_by="Addiction.name", uselist=False, backref='addicted')
 
@@ -51,7 +46,7 @@ class Person(Base):
         self.set_values(values)
         
     def __repr__(self):
-        return "<Person('%s','%s', '%s')>" % (self.last_name, self.first_name, self.middle_name)
+        return u"Человек<(%s, %s, %s, %s, %s, %s)>" % (self.last_name, self.first_name, self.middle_name, self.born_date, self.born_place, self.passport)
 
     def set_values(self, values):
         for key in values.keys():
@@ -139,6 +134,12 @@ class SendAddress(Base):
     def get_columns_names(self):
         return self.__table__.columns.keys()
 
+def database_lower_function(str):
+    if str != None:
+        return str.lower()
+    else:
+        return ''
+
 
 class Model(object):
     '''Класс предназначен для взаимодействия с базой'''
@@ -151,7 +152,7 @@ class Model(object):
         self.engine = create_engine('sqlite:///%s' % database_path, echo=False)
         self.conn = self.engine.connect()
         
-        self.conn.connection.create_function('lower',1,lambda x:x.lower())
+        self.conn.connection.create_function('lower',1, database_lower_function)
         
         self.session = sessionmaker(bind=self.conn)()
         self.person_metadata = Person.metadata
@@ -271,14 +272,14 @@ def generate_db(db, record_count):
             first_name = choice(female_first_names)
             middle_name = choice(female_middle_names)
         
-        person = Person({'last_name':last_name,
+        person = Person({'contract_number':i,
+                         'last_name':last_name,
                          'first_name':first_name,
                          'middle_name':middle_name,
                          'gender':gender,
                          'born_date':date(randrange(1950, 2000), randrange(1, 13), randrange(1, 28)),
                          'born_place':choice(born_places),
-                         'passport_series':randrange(1111, 9999),
-                         'passport_number':randrange(111111, 999999),
+                         'passport':unicode(randrange(1111, 9999)) + u'№' + unicode(randrange(111111, 999999)),
                          'passport_given':u'Чайковским ГОВД',
                          'address':choice(addresses), 
                          'contact_phone':u'1-23-45',
