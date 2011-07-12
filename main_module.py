@@ -172,6 +172,8 @@ class Application(QtGui.QMainWindow):
 
         if self.config['paths'].has_key('database') and isfile(self.config['paths']['database']):
             self.open_base(self.config['paths']['database'])
+        else:
+            self.open_base_slot()
    
     def generate_new_configuration(self):
         img_path = join(getcwdu(),'images')
@@ -336,6 +338,7 @@ class Application(QtGui.QMainWindow):
         table = self.ui.mainTable
         table.clear()
         table.clearContents()
+        table.setSortingEnabled(False)
         
         table.setColumnCount(len(columns))
         
@@ -354,6 +357,8 @@ class Application(QtGui.QMainWindow):
         for i in range(0, len(person_list)):
             for j in range(0, len(columns)):
                 self.fill_cell(i, j, columns[j]['name'], person_list[i])
+              
+        table.setSortingEnabled(True)
               
     def fill_cell(self, row, col, column_name, record):
         #Если колонка пола
@@ -449,7 +454,7 @@ class recordDialog(QtGui.QDialog):
         self.arriveDialog = arriveDialog(self)
         self.arriveDialog.tableUpdated.connect(self.update_table_slot)
         
-        self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close_button_slot)
+        self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.hide)
         self.connect(self.ui.saveButton, SIGNAL('clicked()'), self.save_record_slot)
         self.connect(self.ui.deleteButton, SIGNAL('clicked()'), self.delete_record_slot)
         self.connect(self.ui.middle_name, SIGNAL('editingFinished()'), self.detect_gender_slot)
@@ -584,7 +589,7 @@ class recordDialog(QtGui.QDialog):
         
         elif self.state == 'create_record':
             new_record = self.record
-            values = {}
+            values = {'contract_date':datetime.now()}
             
             #Запоминаем текущую дату для поля дата контракта
             columns = self.record.get_columns_names()
@@ -610,7 +615,7 @@ class recordDialog(QtGui.QDialog):
 
     def delete_record_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
-            u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
+            u"Вы уверены, что хотите удалить запись?", 
             QtGui.QMessageBox.Ok | 
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
@@ -621,7 +626,7 @@ class recordDialog(QtGui.QDialog):
                 sys.exit(IOError)
                 
             self.tableUpdated.emit(self.record, 'delete')
-            self.hide()
+            self.close()
 
     def fill_person_arrive_table(self):
         arrive_list = self.record.arrives
@@ -644,8 +649,7 @@ class recordDialog(QtGui.QDialog):
             
             arrive_foto = arrive_list[0].foto
             
-            if arrive_foto != None:
-                self.fill_arrive_foto(arrive_foto)
+            self.fill_arrive_foto(arrive_foto)
 
     def fill_cell(self, row, col, column_name, record):
         column_value = getattr(record, column_name)
@@ -677,13 +681,16 @@ class recordDialog(QtGui.QDialog):
             item.record = record
                 
     def fill_arrive_foto(self, foto):
+        if foto != None and foto != '':
+            fotopath = join(self.config['paths']['images'], foto)
+            pixmap = (QtGui.QPixmap(fotopath).
+                      scaledToHeight(self.ui.fotoArea.height()/1.12, 1).
+                      scaledToWidth(self.ui.fotoArea.width()/1.2, 1))
+        else:
+            pixmap = (QtGui.QPixmap(':/images/no_foto'))
+                        
         scene = QtGui.QGraphicsScene()   
         
-        fotopath = join(self.config['paths']['images'], foto)
-        
-        pixmap = (QtGui.QPixmap(fotopath).
-                  scaledToHeight(self.ui.fotoArea.height()/1.12, 1).
-                  scaledToWidth(self.ui.fotoArea.width()/1.2, 1))
         scene.addPixmap(pixmap)
         self.ui.fotoArea.setScene(scene)
 
@@ -745,9 +752,7 @@ class recordDialog(QtGui.QDialog):
         
     def change_arrive_foto(self, row, col):
         arrive_foto = self.ui.arriveTable.item(row, 0).record.foto
-        
-        if arrive_foto != None:
-            self.fill_arrive_foto(arrive_foto)
+        self.fill_arrive_foto(arrive_foto)
         
     def open_arrive_record_slot(self, row=None, col=None):
         if (row == None) and (col == None):
@@ -769,7 +774,7 @@ class recordDialog(QtGui.QDialog):
         
         if selected_record_num != -1:
             confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
-                u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
+                u"Вы уверены, что хотите удалить запись?", 
                 QtGui.QMessageBox.Ok | 
                 QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
@@ -787,16 +792,6 @@ class recordDialog(QtGui.QDialog):
                     
                 self.update_table_slot(record, 'delete')
                 
-    def close_button_slot(self):
-        confirm = QtGui.QMessageBox.question(self, u'Подтверждение закрытия',
-            u"Вы уверены, что хотите закрыть форму?\nВсе введенные вами данные будут потеряны!", 
-            QtGui.QMessageBox.Ok | 
-            QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
-
-        if confirm == QtGui.QMessageBox.Ok:
-            self.close()
-        
-        
 class arriveDialog(QtGui.QDialog):
     tableUpdated = pyqtSignal(Arrive, str)
     def __init__(self, parent=None):
@@ -820,7 +815,7 @@ class arriveDialog(QtGui.QDialog):
         self.connect(self.ui.openFoto, SIGNAL('clicked()'), self.open_foto_slot)
         self.connect(self.ui.saveButton, SIGNAL('clicked()'), self.save_record_slot)
         self.connect(self.ui.deleteButton, SIGNAL('clicked()'), self.delete_record_slot)
-        self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close_slot)
+        self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.hide)
         self.connect(self.ui.leave_cause_id, SIGNAL('activated(int)'), self.leave_cause_changed_slot)
 
     def database_opened_slot(self, database):
@@ -1050,15 +1045,19 @@ class arriveDialog(QtGui.QDialog):
      
     def fill_arrive_foto(self, foto):
         scene = QtGui.QGraphicsScene()
-        if foto != None:
+        
+        if foto != None and foto != '':
             fotopath = join(self.config['paths']['images'], foto)
+            pixmap = QtGui.QPixmap(fotopath)
+        else:
+            pixmap = (QtGui.QPixmap(':/images/no_foto'))
             
-            scene.addPixmap(QtGui.QPixmap(fotopath))
-            self.ui.fotoArea.setScene(scene)
+        scene.addPixmap(pixmap)
+        self.ui.fotoArea.setScene(scene)
  
     def delete_record_slot(self):
         confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
-            u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
+            u"Вы уверены, что хотите удалить запись?\n", 
             QtGui.QMessageBox.Ok | 
             QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
 
@@ -1069,20 +1068,8 @@ class arriveDialog(QtGui.QDialog):
                 remove(join(self.config['paths']['images'], self.record.foto))
                 
             self.tableUpdated.emit(self.record, 'delete')
+            self.close()
         
-    def close_slot(self):
-        confirm = QtGui.QMessageBox.question(self, u'Подтверждение закрытия формы',
-                u"Вы уверены что хотите закрыть форму?\nВсе введенные данные будут потеряны", 
-                QtGui.QMessageBox.Ok | 
-                QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
-    
-        if confirm == QtGui.QMessageBox.Ok:
-            if self.state == 'create_record' and self.record.foto != None:
-                tmp_fotoname = self.record.foto
-                remove(join(self.config['paths']['images'], tmp_fotoname))
-            
-            self.hide()
-    
     def leave_cause_changed_slot(self, item_index):
         widget = self.ui.leave_cause_id
         item_data = widget.itemData(item_index).toList()
@@ -1204,7 +1191,7 @@ class filterDialog(QtGui.QDialog):
                     addiction_duration_to   = int(addiction_duration_to)
                 
                 if (addiction_duration_from != '') or (addiction_duration_to != ''):
-                    query = (query.filter("((date('now') - date(addiction_start_date)) between :duration_from and :duration_to)")
+                    query = (query.filter("((date(contract_date) - date(addiction_start_date)) between :duration_from and :duration_to)")
                                   .params(duration_from=addiction_duration_from, duration_to=addiction_duration_to))
             else:
                 value = get_field_value(getattr(self.ui, field_name))
@@ -1346,7 +1333,7 @@ class catalogsDialog(QtGui.QDialog):
         current_index = self.ui.addictionTable.currentRow()
         if current_index != -1:
             confirm = QtGui.QMessageBox.question(self, u'Подтверждение удаления',
-                u"Вы уверены, что хотите удалить запись?\nВосстановить ее можно будет только из бэкапа", 
+                u"Вы уверены, что хотите удалить запись?", 
                 QtGui.QMessageBox.Ok | 
                 QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
     

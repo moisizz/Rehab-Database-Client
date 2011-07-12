@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="icons">
+    <file alias="delete_line">icons/delete_line.png</file>
+    <file alias="edit_line">icons/edit_line.png</file>
+    <file alias="add_line">icons/add_line.png</file>
     <file alias="save">icons/save.png</file>
     <file alias="arrive">icons/arrive.png</file>
     <file alias="add_arrive">icons/add_arrive.png</file>
@@ -15,5 +18,8 @@
     <file alias="edit_person">icons/edit_person.png</file>
     <file alias="open_image">icons/open_image.png</file>
     <file alias="logo">icons/logo.png</file>
+  </qresource>
+  <qresource prefix="images">
+    <file alias="no_foto">no-foto.png</file>
   </qresource>
 </RCC>

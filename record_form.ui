@@ -217,9 +217,9 @@
     <property name="geometry">
      <rect>
       <x>370</x>
-      <y>500</y>
+      <y>498</y>
       <width>90</width>
-      <height>23</height>
+      <height>26</height>
      </rect>
     </property>
     <property name="text">
@@ -256,9 +256,9 @@
     <property name="geometry">
      <rect>
       <x>29</x>
-      <y>500</y>
+      <y>498</y>
       <width>75</width>
-      <height>23</height>
+      <height>26</height>
      </rect>
     </property>
     <property name="text">
@@ -286,9 +286,9 @@
     <property name="geometry">
      <rect>
       <x>270</x>
-      <y>500</y>
+      <y>498</y>
       <width>90</width>
-      <height>23</height>
+      <height>26</height>
      </rect>
     </property>
     <property name="text">
@@ -531,7 +531,7 @@
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(248, 248, 209);</string>
+    <string notr="true">#arriveTable {background-color: rgb(248, 248, 209);}</string>
    </property>
    <property name="editTriggers">
     <set>QAbstractItemView::NoEditTriggers</set>
@@ -554,8 +554,8 @@
     <rect>
      <x>490</x>
      <y>228</y>
-     <width>280</width>
-     <height>51</height>
+     <width>290</width>
+     <height>55</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -566,8 +566,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>280</width>
-     <height>51</height>
+     <width>290</width>
+     <height>55</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -582,10 +582,10 @@
    <widget class="QPushButton" name="arriveDeleteButton">
     <property name="geometry">
      <rect>
-      <x>188</x>
-      <y>18</y>
+      <x>196</x>
+      <y>19</y>
       <width>80</width>
-      <height>23</height>
+      <height>26</height>
      </rect>
     </property>
     <property name="text">
@@ -600,9 +600,9 @@
     <property name="geometry">
      <rect>
       <x>16</x>
-      <y>18</y>
+      <y>19</y>
       <width>80</width>
-      <height>23</height>
+      <height>26</height>
      </rect>
     </property>
     <property name="text">
@@ -616,10 +616,10 @@
    <widget class="QPushButton" name="arriveOpenButton">
     <property name="geometry">
      <rect>
-      <x>102</x>
-      <y>18</y>
+      <x>106</x>
+      <y>19</y>
       <width>80</width>
-      <height>23</height>
+      <height>26</height>
      </rect>
     </property>
     <property name="text">
@@ -635,9 +635,9 @@
    <property name="geometry">
     <rect>
      <x>490</x>
-     <y>286</y>
+     <y>291</y>
      <width>373</width>
-     <height>230</height>
+     <height>222</height>
     </rect>
    </property>
    <property name="cursor" stdset="0">

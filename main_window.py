@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Tue Jul 12 01:22:00 2011
+# Created: Tue Jul 12 02:38:32 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,8 +30,8 @@ class Ui_MainWindow(object):
         self.mainLayout.setMargin(0)
         self.mainLayout.setObjectName(_fromUtf8("mainLayout"))
         self.mainTable = QtGui.QTableWidget(self.verticalLayoutWidget)
-        self.mainTable.setAutoFillBackground(False)
-        self.mainTable.setStyleSheet(_fromUtf8("background-color: rgb(248, 248, 209);"))
+        self.mainTable.setAutoFillBackground(True)
+        self.mainTable.setStyleSheet(_fromUtf8("#mainTable {background-color: rgb(248, 248, 209);}"))
         self.mainTable.setFrameShadow(QtGui.QFrame.Sunken)
         self.mainTable.setMidLineWidth(0)
         self.mainTable.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
@@ -53,6 +53,7 @@ class Ui_MainWindow(object):
         self.buttonBox.setSizePolicy(sizePolicy)
         self.buttonBox.setMinimumSize(QtCore.QSize(0, 30))
         self.buttonBox.setMaximumSize(QtCore.QSize(500, 16777215))
+        self.buttonBox.setStyleSheet(_fromUtf8("#buttonBox {border: none;}"))
         self.buttonBox.setTitle(_fromUtf8(""))
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
         self.horizontalLayoutWidget = QtGui.QWidget(self.buttonBox)

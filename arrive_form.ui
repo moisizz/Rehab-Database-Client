@@ -70,9 +70,12 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>110</width>
+         <width>102</width>
          <height>70</height>
         </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">#fotoButtonBox {border: none;}</string>
        </property>
        <property name="title">
         <string/>
@@ -82,8 +85,8 @@
          <rect>
           <x>5</x>
           <y>5</y>
-          <width>100</width>
-          <height>30</height>
+          <width>90</width>
+          <height>26</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -94,8 +97,8 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>100</width>
-          <height>30</height>
+          <width>90</width>
+          <height>26</height>
          </size>
         </property>
         <property name="layoutDirection">
@@ -114,8 +117,8 @@
          <rect>
           <x>5</x>
           <y>35</y>
-          <width>100</width>
-          <height>30</height>
+          <width>90</width>
+          <height>26</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -126,8 +129,8 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>100</width>
-          <height>30</height>
+          <width>90</width>
+          <height>26</height>
          </size>
         </property>
         <property name="layoutDirection">
@@ -302,9 +305,12 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>324</width>
+     <width>340</width>
      <height>42</height>
     </size>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#buttonBox {border: none;}</string>
    </property>
    <property name="title">
     <string/>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'catalogs_form.ui'
 #
-# Created: Sun Jul 10 02:56:15 2011
+# Created: Tue Jul 12 02:28:45 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -49,16 +49,25 @@ class Ui_Dialog(object):
         self.addAddiction = QtGui.QPushButton(self.verticalLayoutWidget)
         self.addAddiction.setMinimumSize(QtCore.QSize(100, 30))
         self.addAddiction.setMaximumSize(QtCore.QSize(100, 30))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/icons/add_line")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.addAddiction.setIcon(icon)
         self.addAddiction.setObjectName(_fromUtf8("addAddiction"))
         self.addictionButtonsLayout.addWidget(self.addAddiction)
         self.editAddiction = QtGui.QPushButton(self.verticalLayoutWidget)
         self.editAddiction.setMinimumSize(QtCore.QSize(100, 30))
         self.editAddiction.setMaximumSize(QtCore.QSize(100, 30))
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/icons/edit_line")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.editAddiction.setIcon(icon1)
         self.editAddiction.setObjectName(_fromUtf8("editAddiction"))
         self.addictionButtonsLayout.addWidget(self.editAddiction)
         self.deleteAddiction = QtGui.QPushButton(self.verticalLayoutWidget)
         self.deleteAddiction.setMinimumSize(QtCore.QSize(100, 30))
         self.deleteAddiction.setMaximumSize(QtCore.QSize(100, 30))
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/icons/delete_line")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.deleteAddiction.setIcon(icon2)
         self.deleteAddiction.setObjectName(_fromUtf8("deleteAddiction"))
         self.addictionButtonsLayout.addWidget(self.deleteAddiction)
         self.addictionLayout.addLayout(self.addictionButtonsLayout)
@@ -120,3 +129,4 @@ class Ui_Dialog(object):
         self.deleteAddress.setText(QtGui.QApplication.translate("Dialog", "Удалить", None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabText(self.tabs.indexOf(self.addressTab), QtGui.QApplication.translate("Dialog", "Адреса отправки в адаптацию", None, QtGui.QApplication.UnicodeUTF8))
 
+import icons_rc
