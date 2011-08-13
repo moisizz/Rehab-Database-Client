@@ -1,16 +1,10 @@
 # -*- coding: utf8 -*-
 
-import sqlite3
-import copy
-
-from datetime import datetime
-
 from datetime import date
 from random import choice, randrange
-from time import time
-
-from sqlalchemy import create_engine, Table, Column, Integer, Unicode, UnicodeText, SmallInteger, Date, DateTime, MetaData, Boolean, ForeignKey
-from sqlalchemy.orm import sessionmaker, relation, backref, eagerload
+from sqlalchemy.orm.query import aliased
+from sqlalchemy import create_engine, Column, Integer, Unicode, UnicodeText, Date, Boolean, ForeignKey
+from sqlalchemy.orm import sessionmaker, relation
 from sqlalchemy.ext.declarative import declarative_base
         
 Base = declarative_base()
@@ -37,10 +31,11 @@ class Person(Base):
     contact_person = Column(Unicode)
     addiction_start_date = Column(Date)
     addiction_id = Column(Integer, ForeignKey('addiction.id', ondelete='RESTRICT'), nullable=True)
+    conviction = Column(Boolean, default=False)
     notes = Column(UnicodeText)
 
-    arrives = relation("Arrive", order_by="Arrive.arrive_date", uselist=True, cascade='all, delete-orphan')
-    addiction = relation("Addiction", order_by="Addiction.name", uselist=False, backref='addicted')
+    arrives = relation("Arrive", uselist=True, cascade='all, delete-orphan')
+    addiction = relation("Addiction", uselist=False, backref='addicted')
 
     def __init__(self, values):
         self.set_values(values)
@@ -68,8 +63,8 @@ class Arrive(Base):
     is_cure = Column(Boolean)
     foto = Column(Unicode)
 
-    leave_cause = relation("LeaveCause", order_by="LeaveCause.cause", uselist=False)
-    send_address = relation("SendAddress", order_by="SendAddress.address", uselist=False, backref='causes')
+    leave_cause = relation("LeaveCause", uselist=False)
+    send_address = relation("SendAddress", uselist=False, backref='causes')
 
     def __init__(self, values):
         self.set_values(values)
@@ -79,7 +74,7 @@ class Arrive(Base):
             setattr(self, key, values[key])
         
     def __repr__(self):
-        return "<Arrive('%s','%s', %s, '%s')>" % (self.arrive_date, self.leave_date, self.leave_cause, self.foto)
+        return "<Приход/уход('%s','%s', %s, %s, '%s')>" % (self.arrive_date, self.leave_date, self.leave_cause, self.send_address, self.foto)
     
     def get_columns_names(self):
         return self.__table__.columns.keys()
@@ -95,7 +90,7 @@ class Addiction(Base):
         self.name = name
                 
     def __repr__(self):
-        return "<Addiction('%s')>" % (self.name)
+        return "<Зависимость('%s')>" % (self.name)
     
     def get_columns_names(self):
         return self.__table__.columns.keys()
@@ -113,7 +108,7 @@ class LeaveCause(Base):
         self.with_address = with_address
         
     def __repr__(self):
-        return "<Arrive('%s')>" % (self.cause)
+        return "<Причина('%s')>" % (self.cause)
     
     def get_columns_names(self):
         return self.__table__.columns.keys()
@@ -129,7 +124,7 @@ class SendAddress(Base):
         self.address = address
 
     def __repr__(self):
-        return "<Arrive('%s')>" % (self.address)
+        return "<Адрес('%s')>" % (self.address)
     
     def get_columns_names(self):
         return self.__table__.columns.keys()
@@ -180,7 +175,7 @@ class Model(object):
         self.leave_cause_metadata.create_all(self.engine)
         
         addictions = [Addiction(u'Наркотики'), Addiction(u'Дезоморфин'), Addiction(u'Прочее'), Addiction(u'Табак')]
-        send_addresses = [SendAddress(u'Екатеринбург'), SendAddress(u'Чайковский-Завьялово'), 
+        send_addresses = [SendAddress(u'Не указано'), SendAddress(u'Екатеринбург'), SendAddress(u'Чайковский-Завьялово'), 
                           SendAddress(u'Чайковский-Рубеж'), SendAddress(u'Пермь'), 
                           SendAddress(u'Воткинск'), SendAddress(u'Ижевск-Мингазин'), SendAddress(u'Ижевск-Каримов')]
         leave_causes = [LeaveCause(u'Нет', False), LeaveCause(u'Самоуход', False), LeaveCause(u'Отправлен в адаптацию', True)]
@@ -202,7 +197,7 @@ class Model(object):
         self.session.commit()
     
     def get_person_list_query(self):
-        return self.session.query(Person)
+        return self.session.query(Person).order_by(Person.contract_date.desc())
     
     def get_person_list(self):
         return self.get_person_list_query().all()
@@ -211,7 +206,7 @@ class Model(object):
         return self.session.query(Addiction).order_by(Addiction.name).all()
 
     def get_send_addresses(self):
-        return self.session.query(SendAddress).order_by(SendAddress.address).all()
+        return self.session.query(SendAddress).order_by(SendAddress.id).all()
 
     def get_leave_cause_list(self):
         return self.session.query(LeaveCause).order_by(LeaveCause.cause).all()
@@ -273,6 +268,7 @@ def generate_db(db, record_count):
             middle_name = choice(female_middle_names)
         
         person = Person({'contract_number':i,
+                         'contract_date': date(randrange(2000, 2011), randrange(1, 13), randrange(1, 28)),
                          'last_name':last_name,
                          'first_name':first_name,
                          'middle_name':middle_name,
@@ -289,13 +285,16 @@ def generate_db(db, record_count):
         
         person.addiction = choice(addictions)
         
-        arrive1 = Arrive({'arrive_date':date(2009, 5, 5), 'leave_date':date(2009, 6, 6),  'is_cure':False, 'foto':u'foto1.png'})
+        arrive1 = Arrive({'arrive_date':date(randrange(2000, 2002), randrange(1, 13), randrange(1, 28)), 
+                          'leave_date':date(randrange(2003, 2004), randrange(1, 13), randrange(1, 28)),  'is_cure':False, 'foto':u'foto1.png'})
         arrive1.leave_cause = leave_causes[0]
         
-        arrive2 = Arrive({'arrive_date':date(2009, 5, 5), 'leave_date':date(2009, 6, 6),  'is_cure':False, 'foto':u'foto2.png'})
+        arrive2 = Arrive({'arrive_date':date(randrange(2005, 2006), randrange(1, 13), randrange(1, 28)), 
+                          'leave_date':date(randrange(2007, 2008), randrange(1, 13), randrange(1, 28)),  'is_cure':False, 'foto':u'foto2.png'})
         arrive2.leave_cause = leave_causes[0]
         
-        arrive3 = Arrive({'arrive_date':date(2009, 5, 5), 'leave_date':date(2009, 6, 6),  'is_cure':True, 'foto':u'foto3.png'})
+        arrive3 = Arrive({'arrive_date':date(randrange(2009, 2010), randrange(1, 13), randrange(1, 28)), 
+                          'leave_date':date(randrange(2011, 2012), randrange(1, 13), randrange(1, 28)),  'is_cure':True, 'foto':u'foto3.png'})
         arrive3.leave_cause = leave_causes[1]
         arrive3.send_address = choice(send_addresses)
         
@@ -309,17 +308,29 @@ def generate_db(db, record_count):
 if __name__ == '__main__':
     #t = time()
     db = Model({'database_path':'small_test_database.db'})
-    generate_db(db, 30)
-    """
-    print "Время открытия = %s" % (time() - t)
-    t = time()
-    l = db.get_person_list()
-    print "Время запроса = %s" % (time() - t)
+    #generate_db(db, 30)
     
-    t = time()
-    for row in l:
-        print row, '|', row.addiction.name, '|', row.arrives[0].leave_cause.cause, row.arrives[1].leave_cause.cause, row.arrives[2].leave_cause.cause
-    print "Время отображения = %s" % (time() - t)
+    """query = db.get_person_list_query()
+                        
+    adapt = aliased(Arrive)
+    arrive_date_q = (db.session.
+                     query(adapt.person_id, adapt.arrive_date, adapt.leave_date).
+                           order_by('arrive_date DESC').
+                           subquery())
     
-    print Person.__table__.columns.keys()"""
+    arrive_date = aliased(arrive_date_q)
     
+    query = query.from_self().join(arrive_date, arrive_date.c.person_id==Person.id)
+    query = query.filter('((julianday(leave_date)-julianday(arrive_date))/30) >= 1')
+
+    result = query.all();
+    
+    for row in result:
+        print row"""
+    
+    """conn = sqlite3.connect('small_test_database.db')    
+    c = conn.cursor()
+    result = c.execute('select ((julianday(leave_date)-julianday(arrive_date))/30), last_name, first_name, middle_name from arrive join person on person_id=person.id')
+    
+    for row in result:
+        print row[0], row[1], row[2], row[3]"""

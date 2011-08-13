@@ -2,12 +2,13 @@
 
 # Form implementation generated from reading ui file 'main_window.ui'
 #
-# Created: Tue Jul 12 02:38:32 2011
+# Created: Thu Jul 28 17:15:33 2011
 #      by: PyQt4 UI code generator 4.8.4
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
+from main_table import MainTable
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -29,16 +30,9 @@ class Ui_MainWindow(object):
         self.mainLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
         self.mainLayout.setMargin(0)
         self.mainLayout.setObjectName(_fromUtf8("mainLayout"))
-        self.mainTable = QtGui.QTableWidget(self.verticalLayoutWidget)
-        self.mainTable.setAutoFillBackground(True)
-        self.mainTable.setStyleSheet(_fromUtf8("#mainTable {background-color: rgb(248, 248, 209);}"))
-        self.mainTable.setFrameShadow(QtGui.QFrame.Sunken)
-        self.mainTable.setMidLineWidth(0)
-        self.mainTable.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        self.mainTable.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.mainTable.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.mainTable.setGridStyle(QtCore.Qt.SolidLine)
-        self.mainTable.setObjectName(_fromUtf8("mainTable"))
+        
+        self.mainTable = MainTable(self.verticalLayoutWidget)
+        
         self.mainTable.setColumnCount(0)
         self.mainTable.setRowCount(0)
         self.mainTable.verticalHeader().setVisible(True)

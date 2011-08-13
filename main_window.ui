@@ -46,10 +46,10 @@
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
        <property name="selectionMode">
-        <enum>QAbstractItemView::SingleSelection</enum>
+        <enum>QAbstractItemView::MultiSelection</enum>
        </property>
        <property name="selectionBehavior">
-        <enum>QAbstractItemView::SelectRows</enum>
+        <enum>QAbstractItemView::SelectItems</enum>
        </property>
        <property name="gridStyle">
         <enum>Qt::SolidLine</enum>

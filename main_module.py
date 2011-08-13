@@ -4,14 +4,14 @@ import sys
 import VideoCapture
 from os import remove, getcwdu, mkdir
 from os.path import join, isdir, isfile
-from model import Model, Person, Arrive, Addiction, SendAddress
-from sqlalchemy.orm.query import Query
+from model import Model, Person, Arrive, Addiction, SendAddress, LeaveCause
+from sqlalchemy.orm.query import Query, aliased
 from PIL import Image
 import yaml
 from datetime import datetime
 
 from PyQt4 import QtGui
-from PyQt4.QtCore import SIGNAL, QDate, QTime, pyqtSignal, Qt
+from PyQt4.QtCore import SIGNAL, QDate, QTime, pyqtSignal, Qt, QEvent
 
 from main_window import Ui_MainWindow as mainWindow
 import record_form
@@ -27,6 +27,7 @@ def clear_field(field):
         field.children()[0].setChecked(True)
     elif field_type == 'QDateEdit':
         field.setDate(QDate().currentDate())
+        field.setEnabled(False)
     elif field_type == 'QComboBox':
         field.setCurrentIndex(0)
     elif field_type == 'QCheckBox':
@@ -55,6 +56,7 @@ def set_field_value(field, value):
             field.setDate(QDate(value))
         else:
             field.setDate(QDate().currentDate())
+            field.setEnabled(False)
     
     elif field_type == 'QComboBox':
         if field.objectName() == 'leave_cause_id':
@@ -89,7 +91,10 @@ def get_field_value(field):
             elif choise.isChecked() and choise.objectName() == 'female':
                 return Person.female
     elif field_type == 'QDateEdit':
-        return field.date().toPyDate()
+        if field.isEnabled():
+            return field.date().toPyDate()
+        else:
+            return None
     elif field_type == 'QComboBox':
         if field.objectName() == 'leave_cause_id':
             value = field.itemData(field.currentIndex()).toList()[0].toInt()[0]
@@ -103,6 +108,18 @@ def get_field_value(field):
         return unicode(field.toPlainText())
     elif  field_type == 'QCheckBox':
         return int(field.isChecked())
+
+
+class QNewLightDataTable(QtGui.QTableWidget):
+    def __init__(self, *args):
+        QtGui.QTableWidget.__init__(self, *args)
+        
+    def event(self, event):
+        if (event.type()==QEvent.KeyPress) and (event.key()==Qt.Key_Tab):
+            self.emit(SIGNAL("tabPressed"))
+            return True
+
+        return QtGui.QTableWidget.event(self, event)
 
 
 class Application(QtGui.QMainWindow):
@@ -141,6 +158,7 @@ class Application(QtGui.QMainWindow):
           {'name':'contact_person','title':u'Контакт. лицо'},
           {'name':'addiction_id','title':u'Зависимость'},
           {'name':'addiction_start_date','title':u'Длительность (лет)'},
+          {'name':'conviction','title':u'Судимость'},
           {'name':'notes','title':u'Примечания'}])
         
         self.recordDialog = recordDialog(self)
@@ -158,8 +176,9 @@ class Application(QtGui.QMainWindow):
         self.catalogsDialog.addictionsChanged.connect(self.recordDialog.fill_addiction_list)
         self.catalogsDialog.addictionsChanged.connect(self.filterDialog.fill_addiction_list)
         self.catalogsDialog.addressesChanged.connect(self.recordDialog.arriveDialog.fill_send_address_list)
+        self.catalogsDialog.addressesChanged.connect(self.filterDialog.fill_send_address_list)
         
-        self.connect(self.ui.refreshButton,       SIGNAL('clicked()'),                    self.fill_person_table)
+        self.connect(self.ui.refreshButton,        SIGNAL('clicked()'),                    self.fill_person_table)
         self.connect(self.ui.mainTable,            SIGNAL('cellDoubleClicked(int, int)'), self.open_record_slot)
         self.connect(self.ui.createBaseAction,     SIGNAL('triggered()'),                 self.create_base_slot)
         self.connect(self.ui.openBaseAction,       SIGNAL('triggered()'),                 self.open_base_slot)
@@ -169,12 +188,40 @@ class Application(QtGui.QMainWindow):
         self.connect(self.ui.addButton,            SIGNAL('clicked()'),                   self.recordDialog.open_empty_record)
         self.connect(self.ui.deleteButton,         SIGNAL('clicked()'),                   self.delete_record_slot)
         self.connect(self.ui.filterButton,         SIGNAL('clicked()'),                   self.open_filter_slot)
+        self.connect(self.ui.mainTable,            SIGNAL('copyPressed()'),                self.copy_table_data_slot)
 
         if self.config['paths'].has_key('database') and isfile(self.config['paths']['database']):
             self.open_base(self.config['paths']['database'])
         else:
             self.open_base_slot()
-   
+        
+    def copy_table_data_slot(self):
+        table = self.ui.mainTable
+        
+        ranges = table.selectedRanges()
+        
+        strings = {}
+        
+        for r in ranges:
+            for i in range(r.topRow(), r.bottomRow()+1):
+                for j in range(r.leftColumn(), r.rightColumn()+1):
+                    item = table.item(i, j)
+                    if strings.has_key(str(i)):
+                        strings[str(i)].append(item.text())
+                    else:
+                        strings[str(i)] = [item.text()]
+        
+        generated_strings = u""
+        i = 0
+        
+        for row in strings.values():
+            for part in row:
+                generated_strings += unicode(part) + ' '
+            generated_strings += "\n"
+            i += 1
+     
+        self.app.clipboard().setText(generated_strings)
+      
     def generate_new_configuration(self):
         img_path = join(getcwdu(),'images')
         self.config = {'paths': {'images': img_path}}
@@ -287,7 +334,9 @@ class Application(QtGui.QMainWindow):
                 try:
                     self.db.delete_record(record)
                 except IOError:
-                    sys.exit(IOError)
+                    QtGui.QMessageBox.question(self, u'Ошибка',
+                        u"Ошибка удаления записи", 
+                        QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
                     
                 self.update_table_slot(record, 'delete')
 
@@ -336,9 +385,9 @@ class Application(QtGui.QMainWindow):
 
         #Задаем количество колонок таблицы
         table = self.ui.mainTable
+        table.setSortingEnabled(False)
         table.clear()
         table.clearContents()
-        table.setSortingEnabled(False)
         
         table.setColumnCount(len(columns))
         
@@ -357,50 +406,58 @@ class Application(QtGui.QMainWindow):
         for i in range(0, len(person_list)):
             for j in range(0, len(columns)):
                 self.fill_cell(i, j, columns[j]['name'], person_list[i])
-              
+           
         table.setSortingEnabled(True)
+        table.sortByColumn(1, Qt.DescendingOrder)
               
     def fill_cell(self, row, col, column_name, record):
         #Если колонка пола
-        
-        if(column_name == 'gender'):
-            if(getattr(record, column_name) == Person.male):
-                value = u'Муж.'
-            else:
-                value = u'Жен.'
-                
-        elif (column_name == 'addiction_id'):
-            value = record.addiction.name
-            
-        elif (column_name == 'addiction_start_date'):
-            addiction_start_date = getattr(record, column_name)
-            
-            if addiction_start_date == None:
-                addiction_start_date = QDate().currentDate().year()
-                
-            if record.contract_date != None:
-                current_date = QDate(record.contract_date).year()
-            else:
-                current_date = QDate().currentDate().year()
-            
-            start_date = QDate(addiction_start_date).year()
-            
-            if current_date >= start_date:
-                dlit = current_date - start_date
-                value = unicode(dlit)
-            else:
-                value = unicode(0)
-            
-        elif (column_name == 'contract_date') or (column_name == 'born_date'):
-            if getattr(record, column_name) != None:
-                value = QDate(getattr(record, column_name)).toString('dd.MM.yyyy')
-            else:
-                value = u''
-            
+        if getattr(record, column_name) == None:
+            value = ''
         else:
-            value = getattr(record, column_name)
-            if value == None:
-                value = u''
+            if(column_name == 'gender'):
+                if(getattr(record, column_name) == Person.male):
+                    value = u'Муж.'
+                else:
+                    value = u'Жен.'
+                    
+            elif (column_name == 'addiction_id'):
+                value = record.addiction.name
+                
+            elif (column_name == 'addiction_start_date'):
+                addiction_start_date = getattr(record, column_name)
+                
+                if addiction_start_date == None:
+                    addiction_start_date = QDate().currentDate().year()
+                    
+                if record.contract_date != None:
+                    current_date = QDate(record.contract_date).year()
+                else:
+                    current_date = QDate().currentDate().year()
+                
+                start_date = QDate(addiction_start_date).year()
+                
+                if current_date >= start_date:
+                    dlit = current_date - start_date
+                    value = unicode(dlit)
+                else:
+                    value = unicode(0)
+                
+            elif (column_name == 'contract_date') or (column_name == 'born_date'):
+                if getattr(record, column_name) != None:
+                    value = QDate(getattr(record, column_name)).toString('yyyy.MM.dd')
+                else:
+                    value = u''
+                
+            elif (column_name == 'conviction'):
+                column_value = getattr(record, column_name)
+                if column_value:
+                    value = u'Есть'
+                else:
+                    value = u'Нет'
+                
+            else:
+                value = getattr(record, column_name)
         
         item = QtGui.QTableWidgetItem(value)
         
@@ -466,6 +523,14 @@ class recordDialog(QtGui.QDialog):
         self.connect(self.ui.arriveAddButton, SIGNAL('clicked()'), self.open_empty_arrive_slot)
         self.connect(self.ui.arriveDeleteButton, SIGNAL('clicked()'), self.delete_arrive_record_slot)
         self.connect(self.ui.arriveTable,        SIGNAL('cellDoubleClicked(int, int)'), self.open_arrive_record_slot)
+        
+        self.connect(self.ui.born_date_enable, 
+                     SIGNAL('stateChanged(int)'), 
+                     lambda state: self.ui.born_date.setEnabled(state))
+        
+        self.connect(self.ui.addiction_start_date_enable, 
+                     SIGNAL('stateChanged(int)'), 
+                     lambda state: self.ui.addiction_start_date.setEnabled(state))
 
     def database_opened_slot(self, database):
         self.close()
@@ -483,6 +548,9 @@ class recordDialog(QtGui.QDialog):
         self.ui.arriveTable.setRowCount(0)
         self.ui.arriveTable.setColumnCount(0)
         self.ui.arriveTable.clear()
+        
+        self.ui.born_date_enable.setChecked(False)
+        self.ui.addiction_start_date_enable.setChecked(False)
         
         scene = QtGui.QGraphicsScene()
         self.ui.fotoArea.setScene(scene) 
@@ -533,6 +601,12 @@ class recordDialog(QtGui.QDialog):
             if hasattr(self.ui, column):
                 field = getattr(self.ui, column)
                 set_field_value(field, record_field_value)
+
+        if self.record.born_date != None:
+            self.ui.born_date_enable.setChecked(True)
+            
+        if self.record.addiction_start_date != None:
+            self.ui.addiction_start_date_enable.setChecked(True)
 
         self.fill_person_arrive_table()
 
@@ -603,8 +677,10 @@ class recordDialog(QtGui.QDialog):
             try:
                 self.db.insert_record(new_record)
             except IOError:
-                sys.exit(IOError)
-                
+                QtGui.QMessageBox.question(self, u'Ошибка',
+                    u"Ошибка сохранения записи", 
+                    QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)        
+                        
             self.record = new_record
             self.tableUpdated.emit(new_record, 'create')
             
@@ -623,7 +699,9 @@ class recordDialog(QtGui.QDialog):
             try:
                 self.db.delete_record(self.record)
             except IOError:
-                sys.exit(IOError)
+                QtGui.QMessageBox.question(self, u'Ошибка',
+                    u"Ошибка удаления записи", 
+                    QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
                 
             self.tableUpdated.emit(self.record, 'delete')
             self.close()
@@ -683,9 +761,14 @@ class recordDialog(QtGui.QDialog):
     def fill_arrive_foto(self, foto):
         if foto != None and foto != '':
             fotopath = join(self.config['paths']['images'], foto)
-            pixmap = (QtGui.QPixmap(fotopath).
-                      scaledToHeight(self.ui.fotoArea.height()/1.12, 1).
-                      scaledToWidth(self.ui.fotoArea.width()/1.2, 1))
+            
+            if isfile(fotopath):
+                pixmap = (QtGui.QPixmap(fotopath).
+                          scaledToHeight(self.ui.fotoArea.height()/1.12, 1).
+                          scaledToWidth(self.ui.fotoArea.width()/1.2, 1))
+            else:
+                pixmap = (QtGui.QPixmap(':/images/no_foto'))
+                
         else:
             pixmap = (QtGui.QPixmap(':/images/no_foto'))
                         
@@ -785,13 +868,18 @@ class recordDialog(QtGui.QDialog):
                 try:
                     self.db.delete_record(record)
                 except IOError:
-                    sys.exit(IOError)
+                    QtGui.QMessageBox.question(self, u'Ошибка',
+                        u"Ошибка удаления записи", 
+                        QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
                 
                 if record.foto != None:
-                    remove(join(self.config['paths']['images'], record.foto))
+                    fotoname = join(self.config['paths']['images'], record.foto)
+                    if isfile(fotoname):
+                        remove(fotoname)
                     
                 self.update_table_slot(record, 'delete')
-                
+         
+       
 class arriveDialog(QtGui.QDialog):
     tableUpdated = pyqtSignal(Arrive, str)
     def __init__(self, parent=None):
@@ -817,6 +905,14 @@ class arriveDialog(QtGui.QDialog):
         self.connect(self.ui.deleteButton, SIGNAL('clicked()'), self.delete_record_slot)
         self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.hide)
         self.connect(self.ui.leave_cause_id, SIGNAL('activated(int)'), self.leave_cause_changed_slot)
+        
+        self.connect(self.ui.arrive_date_enable, 
+             SIGNAL('stateChanged(int)'), 
+             lambda state: self.ui.arrive_date.setEnabled(state))
+        
+        self.connect(self.ui.leave_date_enable, 
+             SIGNAL('stateChanged(int)'), 
+             lambda state: self.ui.leave_date.setEnabled(state))
 
     def database_opened_slot(self, database):
         self.close()
@@ -868,6 +964,9 @@ class arriveDialog(QtGui.QDialog):
                 else:
                     clear_field(field)
                 
+        self.ui.arrive_date_enable.setChecked(False)
+        self.ui.leave_date_enable.setChecked(False)
+        
         scene = QtGui.QGraphicsScene()
         self.ui.fotoArea.setScene(scene)  
         
@@ -896,6 +995,8 @@ class arriveDialog(QtGui.QDialog):
         save_icon.addPixmap(QtGui.QPixmap(u":/icons/update"), QtGui.QIcon.Normal, QtGui.QIcon.Off)        
         self.ui.saveButton.setIcon(save_icon)
         
+        self.ui.deleteButton.setEnabled(True)
+        
         self.clear_fields()
         
         columns = record.get_columns_names()
@@ -915,6 +1016,12 @@ class arriveDialog(QtGui.QDialog):
 
             if(column == 'foto'):
                 self.fill_arrive_foto(record_field_value) 
+        
+        if self.record.arrive_date != None:
+            self.ui.arrive_date_enable.setChecked(True)
+            
+        if self.record.leave_date != None:
+            self.ui.leave_date_enable.setChecked(True)
         
         self.state = 'open_record'
         self.show()
@@ -962,13 +1069,16 @@ class arriveDialog(QtGui.QDialog):
             img_dir = self.get_images_directory()
             
             try:
-                
                 camera.saveSnapshot(join(img_dir, fotoname), timestamp=True)
             except IOError:
-                sys.exit(IOError)
-            
+                QtGui.QMessageBox.question(self, u'Ошибка',
+                    u"Ошибка создания фотографии", 
+                    QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
+                
             if self.record.foto != None:
-                remove(join(img_dir, self.record.foto))
+                path = join(img_dir, self.record.foto)
+                if isfile(path):
+                    remove(path)
                 
             self.record.foto = fotoname
             
@@ -987,10 +1097,14 @@ class arriveDialog(QtGui.QDialog):
                 src_image.save(fotopath, 'PNG')
                 
             except Exception:
-                sys.exit(Exception.message)
+                QtGui.QMessageBox.question(self, u'Ошибка',
+                    u"Ошибка открытия фотографии", 
+                    QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)
             
             if self.record.foto != None:
-                remove(join(img_dir,self.record.foto))
+                path = join(img_dir,self.record.foto)
+                if isfile(path):
+                    remove(path)
                 
             self.record.foto = fotoname
          
@@ -1034,8 +1148,10 @@ class arriveDialog(QtGui.QDialog):
             try:
                 self.db.insert_record(new_record)
             except IOError:
-                sys.exit(IOError)
-            
+                QtGui.QMessageBox.question(self, u'Ошибка',
+                    u"Ошибка добавления записи фотографии", 
+                    QtGui.QMessageBox.Ok, QtGui.QMessageBox.Ok)      
+                      
             self.record = new_record
             self.tableUpdated.emit(new_record, 'create')
             
@@ -1048,7 +1164,12 @@ class arriveDialog(QtGui.QDialog):
         
         if foto != None and foto != '':
             fotopath = join(self.config['paths']['images'], foto)
-            pixmap = QtGui.QPixmap(fotopath)
+            
+            if isfile(fotopath):
+                pixmap = QtGui.QPixmap(fotopath)
+            else:
+                pixmap = (QtGui.QPixmap(':/images/no_foto'))
+                
         else:
             pixmap = (QtGui.QPixmap(':/images/no_foto'))
             
@@ -1065,7 +1186,9 @@ class arriveDialog(QtGui.QDialog):
             self.db.delete_record(self.record)
             
             if self.record.foto != None:
-                remove(join(self.config['paths']['images'], self.record.foto))
+                fotoname = join(self.config['paths']['images'], self.record.foto)
+                if isfile(fotoname):
+                    remove(fotoname)
                 
             self.tableUpdated.emit(self.record, 'delete')
             self.close()
@@ -1080,10 +1203,12 @@ class arriveDialog(QtGui.QDialog):
             self.ui.send_address_id.setVisible(True)
             self.ui.send_address_id_label.setVisible(True)
             self.ui.send_address_id.setCurrentIndex(0)
+            self.ui.is_cure.setChecked(True)
         else:
             self.ui.send_address_id.setVisible(False)
             self.ui.send_address_id_label.setVisible(False)
             self.ui.send_address_id.setCurrentIndex(-1)
+            self.ui.is_cure.setChecked(False)
 
 
 class filterDialog(QtGui.QDialog):
@@ -1096,30 +1221,51 @@ class filterDialog(QtGui.QDialog):
         self.setWindowFlags(Qt.Tool)
         
         self.filtering_columns = ([
-            {'name':'last_name',            'field_name':'last_name',               'with_type_check':True},
-            {'name':'first_name',           'field_name':'first_name',              'with_type_check':True},
-            {'name':'middle_name',          'field_name':'middle_name',             'with_type_check':True},
-            {'name':'gender',               'field_name':'gender',                  'with_type_check':False},
-            {'name':'passport',             'field_name':'passport',                'with_type_check':False},
-            {'name':'born_place',           'field_name':'born_place',              'with_type_check':True},
+            {'name':'last_name',            'field_name':'last_name',                  'with_type_check':True},
+            {'name':'first_name',           'field_name':'first_name',                 'with_type_check':True},
+            {'name':'middle_name',          'field_name':'middle_name',                'with_type_check':True},
+            {'name':'gender',               'field_name':'gender',                     'with_type_check':False},
+            {'name':'passport',             'field_name':'passport',                   'with_type_check':False},
+            {'name':'born_place',           'field_name':'born_place',                 'with_type_check':True},
             {'name':'born_date',            'field_name':('born_date_from', 
-                                                          'born_date_to'),          'with_type_check':False},
-            {'name':'address',              'field_name':'address_city',            'with_type_check':False},
-            {'name':'address',              'field_name':'address',                 'with_type_check':True},
-            {'name':'addiction_id',         'field_name':'addiction_type',          'with_type_check':False},
+                                                          'born_date_to'),             'with_type_check':False},
+                                   
+            {'name':'address',              'field_name':'address_city',               'with_type_check':False},
+            {'name':'address',              'field_name':'address',                    'with_type_check':True},
+            {'name':'conviction',           'field_name':'conviction',                 'with_type_check':False},
+            {'name':'addiction_id',         'field_name':'addiction_type',             'with_type_check':False},
             {'name':'addiction_start_date', 'field_name':('addiction_duration_from',
-                                                          'addiction_duration_to'),  'with_type_check':False},
-                                   ])
+                                                          'addiction_duration_to'),    'with_type_check':False},
+                                   
+            {'name':'remission',             'field_name':('remission_from',
+                                                           'remission_to'),            'with_type_check':False},
+                                   
+            {'name':'adaptation',            'field_name': ('send_date_from',
+                                                            'send_date_to'),           'with_type_check':False},
+                                   
+            {'name':'arrive',                'field_name': ('arrive_date_from',
+                                                            'arrive_date_to'),          'with_type_check':False},
+            {'name':'reabilitation',         'field_name': 'reabilitation',             'with_type_check':False},
+        ])
         
         self.connect(self.ui.closeButton, SIGNAL('clicked()'), self.close)
         self.connect(self.ui.filterButton, SIGNAL('clicked()'), self.filter_slot)
         self.connect(self.ui.resetButton, SIGNAL('clicked()'), self.reset_filter_slot)
-        self.connect(self.ui.born_date_enabled, SIGNAL('stateChanged(int)'), self.switch_born_date)
+        
+        self.connect(self.ui.born_date_enabled, SIGNAL('stateChanged(int)'),   self.switch_born_date)
+        self.connect(self.ui.send_address_enable, SIGNAL('stateChanged(int)'), self.switch_send_address)
+        
+        self.connect(self.ui.send_date_from_enable, SIGNAL('stateChanged(int)'), self.switch_send_date_from)
+        self.connect(self.ui.send_date_to_enable, SIGNAL('stateChanged(int)'), self.switch_send_date_to)
+        
+        self.connect(self.ui.arrive_date_from_enable, SIGNAL('stateChanged(int)'), self.arrive_date_from)
+        self.connect(self.ui.arrive_date_to_enable, SIGNAL('stateChanged(int)'), self.arrive_date_to)
 
     def database_opened_slot(self, database):
         self.close()
         self.db = database
         self.fill_addiction_list()
+        self.fill_send_address_list()
         self.clear_fields()
 
     def clear_fields(self):
@@ -1131,7 +1277,12 @@ class filterDialog(QtGui.QDialog):
             if column_name == 'gender':
                 self.ui.male.setChecked(True)
                 self.ui.female.setChecked(True)
-            elif column_name == 'born_date' or column_name == 'addiction_start_date':
+            elif (column_name == 'born_date' or 
+                  column_name == 'addiction_start_date' or 
+                  column_name == 'remission' or 
+                  column_name == 'adaptation' or
+                  column_name == 'arrive'):
+                
                 first_field  = getattr(self.ui, column['field_name'][0])
                 second_field = getattr(self.ui, column['field_name'][1])
                 
@@ -1147,6 +1298,12 @@ class filterDialog(QtGui.QDialog):
                 if column['with_type_check']:
                     type_field = getattr(self.ui, column['field_name'] + '_type')
                     clear_field(type_field)
+
+        self.ui.send_address_enable.setChecked(False)
+        self.ui.send_date_from_enable.setChecked(False)
+        self.ui.send_date_to_enable.setChecked(False)
+        self.ui.arrive_date_from_enable.setChecked(False)
+        self.ui.arrive_date_to_enable.setChecked(False)
 
     def filter_slot(self):
         columns = self.filtering_columns
@@ -1173,26 +1330,159 @@ class filterDialog(QtGui.QDialog):
                     to_date = get_field_value(getattr(self.ui, field_name[1]))
                     
                     query = query.filter("(date(born_date) between :from_date and :to_date)").params(from_date=from_date, to_date=to_date)
+            
+            elif column_name == 'conviction':
+                choosen_variant = self.ui.conviction.currentIndex()
+                
+                if choosen_variant == 1:
+                    value = 1
+                elif choosen_variant ==2:
+                    value = 0
+                
+                if choosen_variant != 0:
+                    query = query.filter("%s=:%s" % (column_name, column_name)).params(**{column_name:value})
                 
             elif column_name == 'addiction_start_date':
                 addiction_duration_from = get_field_value(getattr(self.ui, field_name[0]))
                 addiction_duration_to   = get_field_value(getattr(self.ui, field_name[1]))
                 
-                if (addiction_duration_from == '') and (addiction_duration_to != ''):
-                    addiction_duration_from = 0
-                    addiction_duration_to = int(addiction_duration_to)
-                    
-                if (addiction_duration_from != '') and (addiction_duration_to == ''):
-                    addiction_duration_from = int(addiction_duration_from)
-                    addiction_duration_to   = addiction_duration_from
-                
-                if (addiction_duration_from != '') and (addiction_duration_to != ''):
-                    addiction_duration_from = int(addiction_duration_from)
-                    addiction_duration_to   = int(addiction_duration_to)
-                
                 if (addiction_duration_from != '') or (addiction_duration_to != ''):
-                    query = (query.filter("((date(contract_date) - date(addiction_start_date)) between :duration_from and :duration_to)")
-                                  .params(duration_from=addiction_duration_from, duration_to=addiction_duration_to))
+                    if (addiction_duration_from == '') and (addiction_duration_to != ''):
+                        addiction_duration_to = int(addiction_duration_to)
+                        
+                        query = (query.filter("((date(contract_date) - date(addiction_start_date)) <= :duration_to)")
+                                      .params(duration_to=addiction_duration_to))
+                        
+                    if (addiction_duration_from != '') and (addiction_duration_to == ''):
+                        addiction_duration_from = int(addiction_duration_from)
+                    
+                        query = (query.filter("((date(contract_date) - date(addiction_start_date)) >= :duration_from)")
+                                      .params(duration_from=addiction_duration_from, duration_to=addiction_duration_to))
+                    
+                    if (addiction_duration_from != '') and (addiction_duration_to != ''):
+                        addiction_duration_from = int(addiction_duration_from)
+                        addiction_duration_to   = int(addiction_duration_to)
+                    
+                        query = (query.filter("((date(contract_date) - date(addiction_start_date)) between :duration_from and :duration_to)")
+                                      .params(duration_from=addiction_duration_from, duration_to=addiction_duration_to))
+            
+            elif column_name == 'remission':
+                from_fiel_name = column['field_name'][0]
+                to_field_name = column['field_name'][1]
+                
+                from_field_value = get_field_value(getattr(self.ui, from_fiel_name))
+                to_field_value = get_field_value(getattr(self.ui, to_field_name))
+                
+                if from_field_value != '' or to_field_value != '':
+                    leave_date_subquery = (self.db.session.
+                                           query(Arrive.person_id, Arrive.leave_date.label('remission_date')).
+                                           filter('is_cure=1').
+                                           order_by('leave_date DESC').
+                                           subquery())
+     
+                    leave_date_q = aliased(leave_date_subquery)
+                    query = query.join(leave_date_q, Person.id==leave_date_q.c.person_id)
+     
+                    if from_field_value != '' and to_field_value == '':
+                        remission_from = int(from_field_value)
+
+                        query = (query
+                                 .filter('((date("now") - date(remission_date)) >= :remission_from)')
+                                 .params(remission_from=remission_from))
+
+                    elif from_field_value == '' and to_field_value != '':
+                        remission_to = int(to_field_value)
+                        
+                        query = (query
+                                 .filter('((date("now") - date(remission_date)) <= :remission_to)')
+                                 .params(remission_to=remission_to))
+
+                    else:
+                        remission_from = int(from_field_value)
+                        remission_to = int(to_field_value)
+                        
+                        remission_to = int(to_field_value)
+                        
+                        query = (query
+                                 .filter('((date("now") - date(remission_date)) between :remission_from and :remission_to)')
+                                 .params(remission_from=remission_from, remission_to=remission_to))
+             
+            elif column_name == 'adaptation':
+                send_address_field = self.ui.send_address
+                leave_date_from_field = self.ui.send_date_from
+                leave_date_to_field = self.ui.send_date_to
+                
+                if (send_address_field.isEnabled() or leave_date_from_field.isEnabled() or leave_date_to_field.isEnabled()):
+                    adapt = aliased(Arrive)
+                    
+                    send_date_subquery = (self.db.session.
+                                           query(adapt.person_id, adapt.send_address_id, adapt.leave_cause_id, adapt.leave_date).
+                                                 join(LeaveCause, adapt.leave_cause_id==LeaveCause.id).
+                                                 join(SendAddress, adapt.send_address_id==SendAddress.id).
+                                                 filter('is_cure=1').
+                                                 filter('leave_cause.with_address=1').
+                                                 subquery())
+
+                    send_date_q = aliased(send_date_subquery)
+                    query = query.join(send_date_q, send_date_q.c.person_id==Person.id)
+
+                    if send_address_field.isEnabled():
+                        send_address_value = get_field_value(send_address_field)
+                        query = query.filter(send_date_q.c.send_address_id==send_address_value)
+                
+                    if leave_date_from_field.isEnabled() and not leave_date_to_field.isEnabled():
+                        leave_date_value = get_field_value(leave_date_from_field)
+                        query = query.filter(send_date_q.c.leave_date >= leave_date_value)
+                    
+                    elif not leave_date_from_field.isEnabled() and leave_date_to_field.isEnabled():
+                        leave_date_value = get_field_value(leave_date_to_field)
+                        query = query.filter(send_date_q.c.leave_date <= leave_date_value)
+        
+                    elif leave_date_from_field.isEnabled() and leave_date_to_field.isEnabled():
+                        leave_date_from = get_field_value(leave_date_from_field)
+                        leave_date_to = get_field_value(leave_date_to_field)
+                        query = (query.
+                                 filter(send_date_q.c.leave_date >= leave_date_from).
+                                 filter(send_date_q.c.leave_date <= leave_date_to))
+                        
+                        
+            elif column_name == 'arrive':
+                arrive_date_from_field = self.ui.arrive_date_from
+                arrive_date_to_field = self.ui.arrive_date_to
+                
+
+                if (arrive_date_from_field.isEnabled() or arrive_date_to_field.isEnabled()):
+                    arrive_date = aliased(Arrive)
+                    
+                    query = query.join(arrive_date, arrive_date.person_id==Person.id)
+
+                    if arrive_date_from_field.isEnabled() and not arrive_date_to_field.isEnabled():
+                        arrive_date_value = get_field_value(arrive_date_from_field)
+                        query = query.filter(arrive_date.arrive_date >= arrive_date_value)
+                    
+                    elif not arrive_date_from_field.isEnabled() and arrive_date_to_field.isEnabled():
+                        arrive_date_value = get_field_value(arrive_date_to_field)
+                        query = query.filter(arrive_date.arrive_date <= arrive_date_value)
+        
+                    elif arrive_date_from_field.isEnabled() and arrive_date_to_field.isEnabled():
+                        arrive_date_from_value = get_field_value(arrive_date_from_field)
+                        arrive_date_to_value = get_field_value(arrive_date_to_field)
+                        query = (query.
+                                 filter(arrive_date.arrive_date >= arrive_date_from_value).
+                                 filter(arrive_date.arrive_date <= arrive_date_to_value))                  
+                
+            elif column_name == 'reabilitation':
+                if self.ui.reabilitation.isChecked():
+                    reabil_a = aliased(Arrive)
+                    reabil_q = (self.db.session.
+                                     query(reabil_a.person_id, reabil_a.arrive_date.label('reab_start'), reabil_a.leave_date.label('reab_end')).
+                                           order_by('arrive_date DESC').
+                                           subquery())
+                    
+                    reabil = aliased(reabil_q)
+                    
+                    query = query.join(reabil, reabil.c.person_id==Person.id)
+                    query = query.filter('((julianday(reab_end)-julianday(reab_start))/30) >= 5')    
             else:
                 value = get_field_value(getattr(self.ui, field_name))
                 if value != '' and value != None and value != -1:
@@ -1233,6 +1523,15 @@ class filterDialog(QtGui.QDialog):
 
         widget.setCurrentIndex(0)
     
+    def fill_send_address_list(self):
+        send_address_list_widget = self.ui.send_address
+        send_address_list_widget.clear()
+        
+        send_address_list = self.db.get_send_addresses()
+        
+        for i in range(0, len(send_address_list)):
+            send_address_list_widget.addItem(send_address_list[i].address, send_address_list[i].id)
+    
     def switch_born_date(self, state):
         state = bool(state)
         self.ui.born_date_from.setEnabled(state)
@@ -1241,6 +1540,26 @@ class filterDialog(QtGui.QDialog):
         self.ui.born_date_label_from.setEnabled(state)
         self.ui.born_date_label_to.setEnabled(state)
     
+    def switch_send_address(self, state):
+        self.ui.send_address_label.setEnabled(state)
+        self.ui.send_address.setEnabled(state)
+
+    def switch_send_date_from(self, state):
+        self.ui.send_date_from_label.setEnabled(state)
+        self.ui.send_date_from.setEnabled(state)
+    
+    def switch_send_date_to(self, state):
+        self.ui.send_date_to_label.setEnabled(state)
+        self.ui.send_date_to.setEnabled(state)
+    
+    def arrive_date_from(self, state):
+        self.ui.arrive_date_from_label.setEnabled(state)
+        self.ui.arrive_date_from.setEnabled(state)
+
+    def arrive_date_to(self, state):
+        self.ui.arrive_date_to_label.setEnabled(state)
+        self.ui.arrive_date_to.setEnabled(state)
+        
     
 class catalogsDialog(QtGui.QDialog):
     addictionsChanged = pyqtSignal()
